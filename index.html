@@ -93,31 +93,6 @@
       border-radius: 0 0 8px 8px;
       flex-shrink: 0;
     }
-    .legend {
-      padding: 12px 18px;
-      background: #fafafa;
-      border-top: 1px solid #eee;
-      border-radius: 0 0 8px 8px;
-    }
-    .legend-title {
-      font-size: 0.8rem;
-      font-weight: 600;
-      color: #444;
-      margin-bottom: 8px;
-    }
-    .legend-item {
-      display: flex;
-      align-items: center;
-      margin-bottom: 5px;
-      font-size: 0.82rem;
-    }
-    .legend-color {
-      width: 13px;
-      height: 13px;
-      border-radius: 50%;
-      margin-right: 9px;
-      border: 1px solid #ccc;
-    }
     #map {
       flex: 1;
       height: 100vh;
@@ -131,7 +106,6 @@
       font-size: 0.9rem;
       line-height: 1.4;
     }
-
     .fullscreen-btn {
       position: absolute;
       top: 12px;
@@ -153,6 +127,45 @@
       flex: 1;
       height: 100vh;
     }
+    .map-legend {
+      position: absolute;
+      top: 10px;
+      left: 42px;
+      z-index: 1000;
+      background: rgba(255,255,255,0.96);
+      border: 1px solid #d9d9d9;
+      border-radius: 8px;
+      padding: 8px 10px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.12);
+      min-width: 160px;
+      font-size: 0.78rem;
+      backdrop-filter: blur(4px);
+    }
+    .map-legend-title {
+      font-weight: 700;
+      color: #2f2f2f;
+      margin-bottom: 6px;
+      font-size: 0.8rem;
+    }
+    .map-legend-item {
+      display: flex;
+      align-items: center;
+      gap: 7px;
+      margin-bottom: 4px;
+      color: #333;
+      line-height: 1.1;
+      white-space: nowrap;
+    }
+    .map-legend-item:last-child {
+      margin-bottom: 0;
+    }
+    .map-legend-color {
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      border: 1px solid rgba(0,0,0,0.2);
+      flex-shrink: 0;
+    }
   </style>
 </head>
 <body>
@@ -171,10 +184,6 @@
       <details>
         <summary>🔧 Oficinas Parceiras</summary>
         <table id="oficinasTable"><tbody></tbody></table>
-        <div class="legend">
-          <div class="legend-title">Tipos de Oficina</div>
-          <div id="legend"></div>
-        </div>
       </details>
     </div>
 
@@ -185,6 +194,12 @@
 
   <div class="map-wrapper">
     <button class="fullscreen-btn" onclick="toggleFullscreen()">⛶ Tela cheia</button>
+
+    <div class="map-legend">
+      <div class="map-legend-title">Legenda</div>
+      <div id="legend"></div>
+    </div>
+
     <div id="map"></div>
   </div>
 
@@ -205,17 +220,17 @@
     });
 
     let unidades = [
-      {nome: "Matriz - Araquari", endereco: "Rod. BR 280, 4425 - Corveta", cidade: "Araquari - SC", coords: [-26.366, -48.845], oficinas: 45, grande: true},
-      {nome: "Chapecó", coords: [-27.1004, -52.6152], oficinas: 12, grande: false},
-      {nome: "São Vicente", coords: [-23.9631, -46.3919], oficinas: 8, grande: false},
-      {nome: "Canoas", coords: [-29.9094, -51.1738], oficinas: 15, grande: false},
-      {nome: "Osasco", coords: [-23.5329, -46.7917], oficinas: 10, grande: false},
-      {nome: "São José dos Pinhais", coords: [-25.5313, -49.2031], oficinas: 14, grande: false},
-      {nome: "Rolândia", coords: [-23.3093, -51.3692], oficinas: 9, grande: false},
-      {nome: "Pescaria Brava", coords: [-28.3967, -48.8861], oficinas: 18, grande: false},
-      {nome: "Duque de Caxias", coords: [-22.7856, -43.3117], oficinas: 16, grande: false},
-      {nome: "Governador Celso Ramos", coords: [-27.3174, -48.5565], oficinas: 7, grande: false},
-      {nome: "Rodeio", coords: [-26.9224, -49.3640], oficinas: 9, grande: false}
+      {nome: "Matriz - Araquari", cidade: "Araquari - SC", coords: [-26.366, -48.845], oficinas: 45, grande: true},
+      {nome: "Chapecó", cidade: "Chapecó - SC", coords: [-27.1004, -52.6152], oficinas: 12, grande: false},
+      {nome: "São Vicente", cidade: "São Vicente - SP", coords: [-23.9631, -46.3919], oficinas: 8, grande: false},
+      {nome: "Canoas", cidade: "Canoas - RS", coords: [-29.9094, -51.1738], oficinas: 15, grande: false},
+      {nome: "Osasco", cidade: "Osasco - SP", coords: [-23.5329, -46.7917], oficinas: 10, grande: false},
+      {nome: "São José dos Pinhais", cidade: "São José dos Pinhais - PR", coords: [-25.5313, -49.2031], oficinas: 14, grande: false},
+      {nome: "Rolândia", cidade: "Rolândia - PR", coords: [-23.3093, -51.3692], oficinas: 9, grande: false},
+      {nome: "Pescaria Brava", cidade: "Pescaria Brava - SC", coords: [-28.3967, -48.8861], oficinas: 18, grande: false},
+      {nome: "Duque de Caxias", cidade: "Duque de Caxias - RJ", coords: [-22.7856, -43.3117], oficinas: 16, grande: false},
+      {nome: "Governador Celso Ramos", cidade: "Governador Celso Ramos - SC", coords: [-27.3174, -48.5565], oficinas: 7, grande: false},
+      {nome: "Rodeio", cidade: "Rodeio - SC", coords: [-26.9224, -49.3640], oficinas: 9, grande: false}
     ];
 
     const matriz = unidades.find(u => u.nome === "Matriz - Araquari");
@@ -392,19 +407,34 @@
     };
 
     const tipoCores = {
-      "ELETRICA": "#e74c3c", "MECANICA": "#3498db", "TACOGRAFO": "#9b59b6",
-      "LAVAÇÃO": "#1abc9c", "AUTOPEÇA": "#f39c12", "BORRACHARIA": "#e67e22", "GUINCHO": "#2ecc71"
+      "ELETRICA": "#e74c3c",
+      "MECANICA": "#3498db",
+      "TACOGRAFO": "#9b59b6",
+      "LAVAÇÃO": "#1abc9c",
+      "AUTOPEÇA": "#f39c12",
+      "BORRACHARIA": "#e67e22",
+      "GUINCHO": "#2ecc71"
+    };
+
+    const tipoDescricao = {
+      "ELETRICA": "Eletrica",
+      "MECANICA": "Mecanica",
+      "TACOGRAFO": "Tacografo",
+      "LAVAÇÃO": "Lavacao",
+      "AUTOPEÇA": "Autopeça",
+      "BORRACHARIA": "Borracharia",
+      "GUINCHO": "Guincho"
     };
 
     const tbodyUn = document.querySelector('#unidadesTable tbody');
     unidades.forEach(u => {
       const row = tbodyUn.insertRow();
-      row.innerHTML = `<td><strong>${u.nome}</strong><br><small>${u.cidade || ''}</small></td>`;
+      row.innerHTML = `<td><strong>${u.nome}</strong><br><small>${u.cidade}</small></td>`;
       row.onclick = () => {
         clearMarkers();
         map.flyTo(u.coords, 12);
         const icon = u.grande ? grandeIcon : L.icon({iconUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon.png', iconSize: [22,32]});
-        const m = L.marker(u.coords, {icon}).addTo(map).bindPopup(`<b>${u.nome}</b>`);
+        const m = L.marker(u.coords, {icon}).addTo(map).bindPopup(`<b>${u.nome}</b><br>${u.cidade}`);
         currentMarkers.push(m);
         if (oficinasPorUnidade[u.nome]) addOficinas(oficinasPorUnidade[u.nome]);
       };
@@ -420,8 +450,13 @@
         clearMarkers();
         map.flyTo(p.coords, 14);
         const cor = tipoCores[p.tipo] || "#555";
-        const m = L.circleMarker(p.coords, { radius: 8, color: cor, fillColor: cor, fillOpacity: 0.9, weight: 2 })
-          .addTo(map).bindPopup(`<b>${p.nome}</b><br>Tipo: ${p.tipo}`);
+        const m = L.circleMarker(p.coords, {
+          radius: 8,
+          color: cor,
+          fillColor: cor,
+          fillOpacity: 0.9,
+          weight: 2
+        }).addTo(map).bindPopup(`<b>${p.nome}</b><br>Tipo: ${p.tipo}`);
         currentMarkers.push(m);
       };
     });
@@ -429,8 +464,8 @@
     const legendDiv = document.getElementById('legend');
     Object.keys(tipoCores).forEach(tipo => {
       const item = document.createElement('div');
-      item.className = 'legend-item';
-      item.innerHTML = `<div class="legend-color" style="background:${tipoCores[tipo]}"></div> <span>${tipo}</span>`;
+      item.className = 'map-legend-item';
+      item.innerHTML = `<div class="map-legend-color" style="background:${tipoCores[tipo]}"></div><span>= ${tipoDescricao[tipo]}</span>`;
       legendDiv.appendChild(item);
     });
 
@@ -442,8 +477,13 @@
     function addOficinas(lista) {
       lista.forEach(p => {
         const cor = tipoCores[p.tipo] || "#555";
-        const m = L.circleMarker(p.coords, { radius: 8, color: cor, fillColor: cor, fillOpacity: 0.85, weight: 2 })
-          .addTo(map).bindPopup(`<b>${p.nome}</b><br>Tipo: ${p.tipo}`);
+        const m = L.circleMarker(p.coords, {
+          radius: 8,
+          color: cor,
+          fillColor: cor,
+          fillOpacity: 0.85,
+          weight: 2
+        }).addTo(map).bindPopup(`<b>${p.nome}</b><br>Tipo: ${p.tipo}`);
         currentMarkers.push(m);
       });
     }
