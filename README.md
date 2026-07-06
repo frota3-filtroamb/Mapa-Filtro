@@ -1,1 +1,499 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <title>Filtroamb </title>
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+  <style>
+    * { box-sizing: border-box; }
+    html, body {
+      margin: 0;
+      width: 100%;
+      height: 100%;
+      overflow: hidden;
+      font-family: 'Segoe UI', system-ui, Arial, sans-serif;
+      background: #f4f6f8;
+    }
+    body { display: flex; }
+    #sidebar {
+      width: 340px;
+      background: #ffffff;
+      border-right: 1px solid #e0e0e0;
+      display: flex;
+      flex-direction: column;
+      box-shadow: 2px 0 8px rgba(0,0,0,0.05);
+      overflow-y: auto;
+      height: 100vh;
+      flex-shrink: 0;
+    }
+    .header {
+      background: #0d5c2e;
+      color: white;
+      padding: 22px 24px;
+      text-align: center;
+      flex-shrink: 0;
+    }
+    .header h1 { margin: 0; font-size: 1.35rem; font-weight: 600; }
+    .header p { margin: 6px 0 0; font-size: 0.85rem; opacity: 0.85; }
+    .section { margin: 12px 16px; }
+    details {
+      background: #fff;
+      border: 1px solid #e0e0e0;
+      border-radius: 8px;
+      margin-bottom: 12px;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.06);
+    }
+    summary {
+      padding: 14px 18px;
+      font-weight: 600;
+      font-size: 0.95rem;
+      cursor: pointer;
+      background: #f8f9fa;
+      border-radius: 8px;
+      color: #0d5c2e;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    table { width: 100%; border-collapse: collapse; font-size: 0.9rem; }
+    td {
+      padding: 13px 18px;
+      border-bottom: 1px solid #f0f0f0;
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+    td:hover { background: #f0f7f0; }
+    .info {
+      padding: 16px 18px;
+      font-size: 0.82rem;
+      color: #555;
+      background: #f8f9fa;
+      border-radius: 0 0 8px 8px;
+    }
+    .map-wrapper { position: relative; flex: 1; height: 100vh; }
+    #map { width: 100%; height: 100%; }
 
+    .fullscreen-btn {
+      position: absolute;
+      top: 12px;
+      right: 12px;
+      z-index: 1000;
+      background: white;
+      border: 1px solid #ccc;
+      border-radius: 6px;
+      padding: 8px 10px;
+      cursor: pointer;
+      font-size: 14px;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.15);
+    }
+    .map-legend {
+      position: absolute;
+      top: 58px;
+      left: 12px;
+      z-index: 1000;
+      background: rgba(255,255,255,0.96);
+      border: 1px solid #d9d9d9;
+      border-radius: 8px;
+      padding: 8px 10px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.12);
+      min-width: 160px;
+      font-size: 0.78rem;
+      backdrop-filter: blur(4px);
+    }
+    .map-legend-title {
+      font-weight: 700;
+      color: #2f2f2f;
+      margin-bottom: 6px;
+      font-size: 0.8rem;
+    }
+    .map-legend-item {
+      display: flex;
+      align-items: center;
+      gap: 7px;
+      margin-bottom: 4px;
+      color: #333;
+      white-space: nowrap;
+    }
+    .map-legend-color {
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      border: 1px solid rgba(0,0,0,0.2);
+      flex-shrink: 0;
+    }
+
+    .gm-popup {
+      width: 250px;
+      font-family: Arial, sans-serif;
+    }
+    .gm-img {
+      width: 100%;
+      height: 120px;
+      object-fit: cover;
+      border-radius: 10px;
+      margin-bottom: 8px;
+      display: block;
+    }
+    .gm-title {
+      font-size: 15px;
+      font-weight: 700;
+      color: #202124;
+      margin-bottom: 4px;
+    }
+    .gm-sub {
+      font-size: 12px;
+      color: #5f6368;
+      margin-bottom: 8px;
+      line-height: 1.35;
+    }
+    .gm-link {
+      display: inline-block;
+      text-decoration: none;
+      background: #1a73e8;
+      color: #fff;
+      padding: 7px 10px;
+      border-radius: 6px;
+      font-size: 12px;
+      font-weight: 600;
+    }
+    .gm-link:hover { background: #155fc0; }
+    .leaflet-popup-content-wrapper {
+      border-radius: 14px;
+      box-shadow: 0 4px 18px rgba(0,0,0,0.18);
+    }
+    .leaflet-popup-content {
+      margin: 12px;
+    }
+  </style>
+</head>
+<body>
+  <div id="sidebar">
+    <div class="header">
+      <h1>Filtroamb-Unidades</h1>
+      <p>Soluções Ambientais</p>
+    </div>
+
+    <div class="section">
+      <details open>
+        <summary>📍 Unidades</summary>
+        <table id="unidadesTable"><tbody></tbody></table>
+      </details>
+
+      <details>
+        <summary>🔧 Oficinas Parceiras</summary>
+        <table id="oficinasTable"><tbody></tbody></table>
+      </details>
+    </div>
+
+    <div class="info">Mapa Criado por: Victor E. Silveira</div>
+  </div>
+
+  <div class="map-wrapper">
+    <button class="fullscreen-btn" onclick="toggleFullscreen()">⛶ Tela cheia</button>
+    <div class="map-legend">
+      <div class="map-legend-title">Legenda</div>
+      <div id="legend"></div>
+    </div>
+    <div id="map"></div>
+  </div>
+
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+  <script>
+    const map = L.map('map').setView([-26, -50], 6.5);
+
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+      attribution: '© OpenStreetMap | Filtroamb'
+    }).addTo(map);
+
+    let currentMarkers = [];
+
+    const grandeIcon = L.icon({
+      iconUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon.png',
+      shadowUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png',
+      iconSize: [38, 55], iconAnchor: [19, 55], popupAnchor: [0, -45]
+    });
+
+    let unidades = [
+      {nome: "Matriz - Araquari", cidade: "Araquari - SC", coords: [-26.366, -48.845], oficinas: 45, grande: true},
+      {nome: "Chapecó", cidade: "Chapecó - SC", coords: [-27.1004, -52.6152], oficinas: 12, grande: false},
+      {nome: "São Vicente", cidade: "São Vicente - SP", coords: [-23.9631, -46.3919], oficinas: 8, grande: false},
+      {nome: "Canoas", cidade: "Canoas - RS", coords: [-29.9094, -51.1738], oficinas: 15, grande: false},
+      {nome: "Osasco", cidade: "Osasco - SP", coords: [-23.5329, -46.7917], oficinas: 10, grande: false},
+      {nome: "São José dos Pinhais", cidade: "São José dos Pinhais - PR", coords: [-25.5313, -49.2031], oficinas: 14, grande: false},
+      {nome: "Rolândia", cidade: "Rolândia - PR", coords: [-23.3093, -51.3692], oficinas: 9, grande: false},
+      {nome: "Pescaria Brava", cidade: "Pescaria Brava - SC", coords: [-28.3967, -48.8861], oficinas: 18, grande: false},
+      {nome: "Duque de Caxias", cidade: "Duque de Caxias - RJ", coords: [-22.7856, -43.3117], oficinas: 16, grande: false},
+      {nome: "Governador Celso Ramos", cidade: "Governador Celso Ramos - SC", coords: [-27.3174, -48.5565], oficinas: 7, grande: false},
+      {nome: "Rodeio", cidade: "Rodeio - SC", coords: [-26.9224, -49.3640], oficinas: 9, grande: false}
+    ];
+
+    const matriz = unidades.find(u => u.nome === "Matriz - Araquari");
+    const outras = unidades.filter(u => u.nome !== "Matriz - Araquari").sort((a, b) => a.nome.localeCompare(b.nome));
+    unidades = [matriz, ...outras];
+
+    const oficinasPorUnidade = {
+      "Matriz - Araquari": [
+        {nome: "Tec.Sat Sistemas", tipo: "ELETRICA", coords: [-26.4156, -48.7852], imagem: "https://images.unsplash.com/photo-1517048676732-d65bc937f952?w=600&q=80", endereco: "Araquari - SC"},
+        {nome: "Mecânica D.A. Diesel", tipo: "MECANICA", coords: [-26.4174, -48.7932], imagem: "https://images.unsplash.com/photo-1503376780353-7e6692767b70?w=600&q=80", endereco: "Araquari - SC"},
+        {nome: "Truck Diag Elétrica Diesel", tipo: "ELETRICA", coords: [-26.4165, -48.7773], imagem: "https://images.unsplash.com/photo-1517048676732-d65bc937f952?w=600&q=80", endereco: "Araquari - SC"},
+        {nome: "Mecânica João Grandão", tipo: "MECANICA", coords: [-26.4153, -48.7712], imagem: "https://images.unsplash.com/photo-1503376780353-7e6692767b70?w=600&q=80", endereco: "Araquari - SC"},
+        {nome: "Mecânica Dela Diesel - Araquari", tipo: "MECANICA", coords: [-26.4422, -48.8101], imagem: "https://images.unsplash.com/photo-1483721310020-03333e577078?w=600&q=80", endereco: "Araquari - SC"},
+        {nome: "Dicave | Volvo Caminhões - Joinville", tipo: "MECANICA", coords: [-26.4366, -48.8115], imagem: "https://images.unsplash.com/photo-1486006920555-c77dcf18193c?w=600&q=80", endereco: "Joinville - SC"},
+        {nome: "Air Truck", tipo: "MECANICA", coords: [-26.4353, -48.8104], imagem: "https://images.unsplash.com/photo-1503376780353-7e6692767b70?w=600&q=80", endereco: "Joinville - SC"},
+        {nome: "Lorenzi Tacógrafos", tipo: "TACOGRAFO", coords: [-26.4344, -48.8117], imagem: "https://images.unsplash.com/photo-1517048676732-d65bc937f952?w=600&q=80", endereco: "Joinville - SC"},
+        {nome: "Eixo Sul Lavação", tipo: "LAVAÇÃO", coords: [-26.4347, -48.8127], imagem: "https://images.unsplash.com/photo-1520342868574-5fa3804e551c?w=600&q=80", endereco: "Joinville - SC"},
+        {nome: "Diferenciais Guaramirim", tipo: "MECANICA", coords: [-26.4346, -48.8115], imagem: "https://images.unsplash.com/photo-1486006920555-c77dcf18193c?w=600&q=80", endereco: "Joinville - SC"},
+        {nome: "Assis Caminhões", tipo: "MECANICA", coords: [-26.4341, -48.8156], imagem: "https://images.unsplash.com/photo-1503376780353-7e6692767b70?w=600&q=80", endereco: "Joinville - SC"},
+        {nome: "Escapamentos Catarina Auto Center", tipo: "AUTOPEÇA", coords: [-26.2809, -48.8494], imagem: "https://images.unsplash.com/photo-1489824904134-891ab64532f1?w=600&q=80", endereco: "Joinville - SC"},
+        {nome: "Caminhão & Cia", tipo: "MECANICA", coords: [-26.2688, -48.8491], imagem: "https://images.unsplash.com/photo-1503376780353-7e6692767b70?w=600&q=80", endereco: "Joinville - SC"},
+        {nome: "Oficina Camarão - Funilaria de Caminhões em Joinville", tipo: "MECANICA", coords: [-26.2654, -48.8566], imagem: "https://images.unsplash.com/photo-1486006920555-c77dcf18193c?w=600&q=80", endereco: "Joinville - SC"},
+        {nome: "Truck Pneus Joinville", tipo: "BORRACHARIA", coords: [-26.2495, -48.8649], imagem: "https://images.unsplash.com/photo-1486006920555-c77dcf18193c?w=600&q=80", endereco: "Joinville - SC"},
+        {nome: "Bilk Diesel Mecânica Diesel", tipo: "MECANICA", coords: [-26.2909, -48.9115], imagem: "https://images.unsplash.com/photo-1486006920555-c77dcf18193c?w=600&q=80", endereco: "Araquari - SC"},
+        {nome: "Valdiesel Mecânica", tipo: "MECANICA", coords: [-26.2091, -48.9134], imagem: "https://images.unsplash.com/photo-1486006920555-c77dcf18193c?w=600&q=80", endereco: "Araquari - SC"},
+        {nome: "Joinville Guincho", tipo: "GUINCHO", coords: [-26.2283, -48.8317], imagem: "https://images.unsplash.com/photo-1493238792000-8113da705763?w=600&q=80", endereco: "Joinville - SC"},
+        {nome: "XANDE Munck, Guincho e Auto Socorro", tipo: "GUINCHO", coords: [-26.2767, -48.8035], imagem: "https://images.unsplash.com/photo-1493238792000-8113da705763?w=600&q=80", endereco: "Joinville - SC"},
+        {nome: "Auto Socorro JM - Guinchos 24 horas", tipo: "GUINCHO", coords: [-26.2724, -48.8751], imagem: "https://images.unsplash.com/photo-1493238792000-8113da705763?w=600&q=80", endereco: "Joinville - SC"},
+        {nome: "Rodrigo Guincho", tipo: "GUINCHO", coords: [-26.3308, -48.8346], imagem: "https://images.unsplash.com/photo-1493238792000-8113da705763?w=600&q=80", endereco: "Araquari - SC"},
+        {nome: "GUINCHO ITAUM", tipo: "GUINCHO", coords: [-26.3305, -48.8328], imagem: "https://images.unsplash.com/photo-1493238792000-8113da705763?w=600&q=80", endereco: "Araquari - SC"},
+        {nome: "Prants Car Guincho Automotivo e Caminhões", tipo: "GUINCHO", coords: [-26.3321, -48.8192], imagem: "https://images.unsplash.com/photo-1493238792000-8113da705763?w=600&q=80", endereco: "Araquari - SC"},
+        {nome: "Souza guincho", tipo: "GUINCHO", coords: [-26.3381, -48.8152], imagem: "https://images.unsplash.com/photo-1493238792000-8113da705763?w=600&q=80", endereco: "Araquari - SC"},
+        {nome: "Lima guincho", tipo: "GUINCHO", coords: [-26.3339, -48.8058], imagem: "https://images.unsplash.com/photo-1493238792000-8113da705763?w=600&q=80", endereco: "Araquari - SC"},
+        {nome: "Guincho Rampaville", tipo: "GUINCHO", coords: [-26.3731, -48.8259], imagem: "https://images.unsplash.com/photo-1493238792000-8113da705763?w=600&q=80", endereco: "Araquari - SC"},
+        {nome: "Guincho Araquari e Auto peças e compra e venda de Sucatas", tipo: "GUINCHO", coords: [-26.3959, -48.7947], imagem: "https://images.unsplash.com/photo-1493238792000-8113da705763?w=600&q=80", endereco: "Araquari - SC"},
+        {nome: "JD Guinchos", tipo: "GUINCHO", coords: [-26.4136, -48.7947], imagem: "https://images.unsplash.com/photo-1493238792000-8113da705763?w=600&q=80", endereco: "Araquari - SC"},
+        {nome: "Brayan Guincho pesado e Transporte 24h", tipo: "GUINCHO", coords: [-26.3432, -48.7682], imagem: "https://images.unsplash.com/photo-1493238792000-8113da705763?w=600&q=80", endereco: "Araquari - SC"},
+        {nome: "Beto Borracharia Móvel 24h", tipo: "BORRACHARIA", coords: [-26.3118, -48.9128], imagem: "https://images.unsplash.com/photo-1486006920555-c77dcf18193c?w=600&q=80", endereco: "Araquari - SC"},
+        {nome: "Bosch Car Service - Auto Mecânica Dorival", tipo: "MECANICA", coords: [-26.3268, -48.8373], imagem: "https://images.unsplash.com/photo-1486006920555-c77dcf18193c?w=600&q=80", endereco: "Araquari - SC"},
+        {nome: "BORRACHARIA GODINHO 24h", tipo: "BORRACHARIA", coords: [-26.3561, -48.8464], imagem: "https://images.unsplash.com/photo-1486006920555-c77dcf18193c?w=600&q=80", endereco: "Araquari - SC"},
+        {nome: "Borracharia do Zinho SOS", tipo: "BORRACHARIA", coords: [-26.3698, -48.8572], imagem: "https://images.unsplash.com/photo-1486006920555-c77dcf18193c?w=600&q=80", endereco: "Araquari - SC"},
+        {nome: "BORRACHARIA MÓVEL FIGUEREDO", tipo: "BORRACHARIA", coords: [-26.4311, -48.8045], imagem: "https://images.unsplash.com/photo-1486006920555-c77dcf18193c?w=600&q=80", endereco: "Araquari - SC"},
+        {nome: "Borracharia e mecânica pais e filhos", tipo: "BORRACHARIA", coords: [-26.1931, -48.9197], imagem: "https://images.unsplash.com/photo-1486006920555-c77dcf18193c?w=600&q=80", endereco: "Araquari - SC"},
+        {nome: "BORRACHARIA MÓVEL", tipo: "BORRACHARIA", coords: [-26.3984, -48.8072], imagem: "https://images.unsplash.com/photo-1486006920555-c77dcf18193c?w=600&q=80", endereco: "Araquari - SC"},
+        {nome: "Auto elétrica Baterias Rodrigues", tipo: "ELETRICA", coords: [-26.3961, -48.7984], imagem: "https://images.unsplash.com/photo-1517048676732-d65bc937f952?w=600&q=80", endereco: "Araquari - SC"},
+        {nome: "Fênix auto elétrica e acessórios", tipo: "ELETRICA", coords: [-26.4333, -48.8115], imagem: "https://images.unsplash.com/photo-1517048676732-d65bc937f952?w=600&q=80", endereco: "Joinville - SC"},
+        {nome: "Auto elétrica Martins LTDA", tipo: "ELETRICA", coords: [-26.4341, -48.8137], imagem: "https://images.unsplash.com/photo-1517048676732-d65bc937f952?w=600&q=80", endereco: "Joinville - SC"},
+        {nome: "Hazure Sul", tipo: "MECANICA", coords: [-26.3761, -48.8407], imagem: "https://images.unsplash.com/photo-1486006920555-c77dcf18193c?w=600&q=80", endereco: "Araquari - SC"},
+        {nome: "Michel Elétrica Diesel", tipo: "ELETRICA", coords: [-26.3761, -48.8512], imagem: "https://images.unsplash.com/photo-1517048676732-d65bc937f952?w=600&q=80", endereco: "Araquari - SC"},
+        {nome: "Michel Elétrica Diesel(MATRIZ)", tipo: "ELETRICA", coords: [-26.3538, -48.8598], imagem: "https://images.unsplash.com/photo-1517048676732-d65bc937f952?w=600&q=80", endereco: "Araquari - SC"},
+        {nome: "Truck Diag Elétrica Diesel", tipo: "ELETRICA", coords: [-26.4055, -48.7708], imagem: "https://images.unsplash.com/photo-1517048676732-d65bc937f952?w=600&q=80", endereco: "Araquari - SC"},
+        {nome: "Chip Truck - Auto Elétrica de Caminhões", tipo: "ELETRICA", coords: [-26.2204, -48.9174], imagem: "https://images.unsplash.com/photo-1517048676732-d65bc937f952?w=600&q=80", endereco: "Araquari - SC"},
+        {nome: "AUTO ELETRICA ELETROTRUCK", tipo: "ELETRICA", coords: [-26.2315, -48.9177], imagem: "https://images.unsplash.com/photo-1517048676732-d65bc937f952?w=600&q=80", endereco: "Araquari - SC"}
+      ],
+      "Rodeio": [
+        {nome: "OFICINA T2 TECNODUE", tipo: "MECANICA", coords: [-26.9084, -49.3664], imagem: "https://images.unsplash.com/photo-1486006920555-c77dcf18193c?w=600&q=80", endereco: "Rodeio - SC"},
+        {nome: "Oficina do Johnny", tipo: "MECANICA", coords: [-26.9094, -49.3671], imagem: "https://images.unsplash.com/photo-1486006920555-c77dcf18193c?w=600&q=80", endereco: "Rodeio - SC"},
+        {nome: "Auto Mecânica Rogério", tipo: "MECANICA", coords: [-26.8443, -49.2821], imagem: "https://images.unsplash.com/photo-1486006920555-c77dcf18193c?w=600&q=80", endereco: "Rodeio - SC"},
+        {nome: "Mecânica Bertoldi ldta me", tipo: "MECANICA", coords: [-26.9486, -49.3689], imagem: "https://images.unsplash.com/photo-1486006920555-c77dcf18193c?w=600&q=80", endereco: "Rodeio - SC"},
+        {nome: "Rudi Guincho 24 Horas | Leves e Pesados", tipo: "GUINCHO", coords: [-26.8613, -49.0981], imagem: "https://images.unsplash.com/photo-1493238792000-8113da705763?w=600&q=80", endereco: "Rodeio - SC"},
+        {nome: "BR Mecânica Diesel", tipo: "MECANICA", coords: [-26.8646, -49.0895], imagem: "https://images.unsplash.com/photo-1486006920555-c77dcf18193c?w=600&q=80", endereco: "Rodeio - SC"},
+        {nome: "Marchetti Truck Center", tipo: "AUTOPEÇA", coords: [-26.8613, -49.0951], imagem: "https://images.unsplash.com/photo-1489824904134-891ab64532f1?w=600&q=80", endereco: "Rodeio - SC"},
+        {nome: "PR Mecânica Diesel", tipo: "MECANICA", coords: [-26.8611, -49.0451], imagem: "https://images.unsplash.com/photo-1486006920555-c77dcf18193c?w=600&q=80", endereco: "Rodeio - SC"},
+        {nome: "Mecânica Mello Auto Diesel", tipo: "MECANICA", coords: [-26.8304, -49.2625], imagem: "https://images.unsplash.com/photo-1486006920555-c77dcf18193c?w=600&q=80", endereco: "Rodeio - SC"}
+      ],
+      "Pescaria Brava": [
+        {nome: "Roda Brasil Mecânica de Carretas - BR101", tipo: "MECANICA", coords: [-28.4271, -48.9182], imagem: "https://images.unsplash.com/photo-1486006920555-c77dcf18193c?w=600&q=80", endereco: "Pescaria Brava - SC"},
+        {nome: "Mecânica Sul Forte Truck Service", tipo: "MECANICA", coords: [-28.4587, -48.9857], imagem: "https://images.unsplash.com/photo-1486006920555-c77dcf18193c?w=600&q=80", endereco: "Pescaria Brava - SC"},
+        {nome: "Messilva Mecânica Scania Silva", tipo: "MECANICA", coords: [-28.4581, -48.9861], imagem: "https://images.unsplash.com/photo-1486006920555-c77dcf18193c?w=600&q=80", endereco: "Pescaria Brava - SC"},
+        {nome: "Roda Brasil Molas e Mecânica de Carretas - Tubarão", tipo: "MECANICA", coords: [-28.4659, -48.9911], imagem: "https://images.unsplash.com/photo-1486006920555-c77dcf18193c?w=600&q=80", endereco: "Pescaria Brava - SC"},
+        {nome: "CRILUB - Pneus e Troca de Óleo", tipo: "BORRACHARIA", coords: [-28.4754, -48.9951], imagem: "https://images.unsplash.com/photo-1486006920555-c77dcf18193c?w=600&q=80", endereco: "Pescaria Brava - SC"},
+        {nome: "Mêcanica Três Amigos", tipo: "MECANICA", coords: [-28.4672, -48.9961], imagem: "https://images.unsplash.com/photo-1486006920555-c77dcf18193c?w=600&q=80", endereco: "Pescaria Brava - SC"},
+        {nome: "Mecânica Só Diesel Alemão", tipo: "MECANICA", coords: [-28.4633, -49.0209], imagem: "https://images.unsplash.com/photo-1486006920555-c77dcf18193c?w=600&q=80", endereco: "Pescaria Brava - SC"},
+        {nome: "Cordini Truck Diesel, Oficina de Caminhões", tipo: "MECANICA", coords: [-28.4672, -49.0209], imagem: "https://images.unsplash.com/photo-1486006920555-c77dcf18193c?w=600&q=80", endereco: "Pescaria Brava - SC"},
+        {nome: "Bj Mecânica de Caminhões", tipo: "MECANICA", coords: [-28.4744, -49.0291], imagem: "https://images.unsplash.com/photo-1486006920555-c77dcf18193c?w=600&q=80", endereco: "Pescaria Brava - SC"},
+        {nome: "Messiltu Truck Center", tipo: "MECANICA", coords: [-28.4751, -49.0311], imagem: "https://images.unsplash.com/photo-1486006920555-c77dcf18193c?w=600&q=80", endereco: "Pescaria Brava - SC"},
+        {nome: "Elite Truck Diesel Mecânica", tipo: "MECANICA", coords: [-28.4953, -49.0411], imagem: "https://images.unsplash.com/photo-1486006920555-c77dcf18193c?w=600&q=80", endereco: "Pescaria Brava - SC"},
+        {nome: "Brutus Mecânica Truck Diesel", tipo: "MECANICA", coords: [-28.5071, -49.0481], imagem: "https://images.unsplash.com/photo-1486006920555-c77dcf18193c?w=600&q=80", endereco: "Pescaria Brava - SC"},
+        {nome: "Niltinho Motores Diesel", tipo: "MECANICA", coords: [-27.3135, -48.5746], imagem: "https://images.unsplash.com/photo-1486006920555-c77dcf18193c?w=600&q=80", endereco: "Pescaria Brava - SC"},
+        {nome: "Mecanica e auto socorro André", tipo: "MECANICA", coords: [-27.3157, -48.5572], imagem: "https://images.unsplash.com/photo-1486006920555-c77dcf18193c?w=600&q=80", endereco: "Pescaria Brava - SC"},
+        {nome: "SMJ GUINCHOS E MIRANDA BATERIAS", tipo: "GUINCHO", coords: [-27.3478, -48.5962], imagem: "https://images.unsplash.com/photo-1493238792000-8113da705763?w=600&q=80", endereco: "Pescaria Brava - SC"},
+        {nome: "Mecânica Sandro", tipo: "MECANICA", coords: [-27.3995, -48.6308], imagem: "https://images.unsplash.com/photo-1486006920555-c77dcf18193c?w=600&q=80", endereco: "Pescaria Brava - SC"},
+        {nome: "Recar Transporte e Ar Condicionado", tipo: "MECANICA", coords: [-27.3966, -48.6063], imagem: "https://images.unsplash.com/photo-1486006920555-c77dcf18193c?w=600&q=80", endereco: "Pescaria Brava - SC"}
+      ],
+      "Governador Celso Ramos": [
+        {nome: "BORRACHARIA MOVEL QUEIROZ AUTOSOCORRO", tipo: "BORRACHARIA", coords: [-27.3619, -48.6371], imagem: "https://images.unsplash.com/photo-1486006920555-c77dcf18193c?w=600&q=80", endereco: "Governador Celso Ramos - SC"},
+        {nome: "Auto Eletrica Novo Tempo", tipo: "ELETRICA", coords: [-27.4209, -48.6235], imagem: "https://images.unsplash.com/photo-1517048676732-d65bc937f952?w=600&q=80", endereco: "Governador Celso Ramos - SC"},
+        {nome: "Mecânica Beto", tipo: "MECANICA", coords: [-27.4234, -48.6253], imagem: "https://images.unsplash.com/photo-1486006920555-c77dcf18193c?w=600&q=80", endereco: "Governador Celso Ramos - SC"},
+        {nome: "Auto Socorro Marcinei - Caminhões", tipo: "MECANICA", coords: [-27.2257, -48.6141], imagem: "https://images.unsplash.com/photo-1486006920555-c77dcf18193c?w=600&q=80", endereco: "Governador Celso Ramos - SC"},
+        {nome: "OFICINA MECÂNICA CAMINHÃO JR REPAROS", tipo: "MECANICA", coords: [-27.2591, -48.7071], imagem: "https://images.unsplash.com/photo-1486006920555-c77dcf18193c?w=600&q=80", endereco: "Governador Celso Ramos - SC"},
+        {nome: "Mecânica Silva de Caminhão", tipo: "MECANICA", coords: [-27.2554, -48.7259], imagem: "https://images.unsplash.com/photo-1486006920555-c77dcf18193c?w=600&q=80", endereco: "Governador Celso Ramos - SC"},
+        {nome: "Rio Vale Diesel", tipo: "MECANICA", coords: [-27.2661, -48.7951], imagem: "https://images.unsplash.com/photo-1486006920555-c77dcf18193c?w=600&q=80", endereco: "Governador Celso Ramos - SC"}
+      ],
+      "Duque de Caxias": [
+        {nome: "Oficina Mecânica Lindra Nadir", tipo: "MECANICA", coords: [-22.6691, -43.2964], imagem: "https://images.unsplash.com/photo-1486006920555-c77dcf18193c?w=600&q=80", endereco: "Duque de Caxias - RJ"},
+        {nome: "Mecanica diesel Marcelo", tipo: "MECANICA", coords: [-22.6634, -43.3111], imagem: "https://images.unsplash.com/photo-1486006920555-c77dcf18193c?w=600&q=80", endereco: "Duque de Caxias - RJ"},
+        {nome: "VN AUTOMECÂNICA A DIESEL", tipo: "MECANICA", coords: [-22.6665, -43.2911], imagem: "https://images.unsplash.com/photo-1486006920555-c77dcf18193c?w=600&q=80", endereco: "Duque de Caxias - RJ"},
+        {nome: "Oficina Trucks Control em Duque de Caxias", tipo: "MECANICA", coords: [-22.6641, -43.2718], imagem: "https://images.unsplash.com/photo-1486006920555-c77dcf18193c?w=600&q=80", endereco: "Duque de Caxias - RJ"},
+        {nome: "Jorge Guedes", tipo: "MECANICA", coords: [-22.6484, -43.2574], imagem: "https://images.unsplash.com/photo-1486006920555-c77dcf18193c?w=600&q=80", endereco: "Duque de Caxias - RJ"},
+        {nome: "Dézio Auto Mecânica Diesel", tipo: "MECANICA", coords: [-22.6643, -43.2655], imagem: "https://images.unsplash.com/photo-1486006920555-c77dcf18193c?w=600&q=80", endereco: "Duque de Caxias - RJ"},
+        {nome: "M.S TRUCK", tipo: "MECANICA", coords: [-22.6726, -43.2932], imagem: "https://images.unsplash.com/photo-1486006920555-c77dcf18193c?w=600&q=80", endereco: "Duque de Caxias - RJ"},
+        {nome: "Global Manutenção Veicular", tipo: "MECANICA", coords: [-22.6861, -43.2925], imagem: "https://images.unsplash.com/photo-1486006920555-c77dcf18193c?w=600&q=80", endereco: "Duque de Caxias - RJ"},
+        {nome: "J L S Mecanica Diesel", tipo: "MECANICA", coords: [-22.6981, -43.2706], imagem: "https://images.unsplash.com/photo-1486006920555-c77dcf18193c?w=600&q=80", endereco: "Duque de Caxias - RJ"},
+        {nome: "S.O.S DIESEL 24 HORAS", tipo: "MECANICA", coords: [-22.6375, -43.2999], imagem: "https://images.unsplash.com/photo-1486006920555-c77dcf18193c?w=600&q=80", endereco: "Duque de Caxias - RJ"},
+        {nome: "BRG Mecanica Diesel", tipo: "MECANICA", coords: [-22.6362, -43.2678], imagem: "https://images.unsplash.com/photo-1486006920555-c77dcf18193c?w=600&q=80", endereco: "Duque de Caxias - RJ"},
+        {nome: "Borracharia Movel | Socorro 24h WJF", tipo: "BORRACHARIA", coords: [-22.7529, -43.2734], imagem: "https://images.unsplash.com/photo-1486006920555-c77dcf18193c?w=600&q=80", endereco: "Duque de Caxias - RJ"},
+        {nome: "Borracheiro de São José", tipo: "BORRACHARIA", coords: [-22.8892, -43.2204], imagem: "https://images.unsplash.com/photo-1486006920555-c77dcf18193c?w=600&q=80", endereco: "Duque de Caxias - RJ"},
+        {nome: "Eletroforce Elétrica Diesel", tipo: "ELETRICA", coords: [-22.6685, -43.2749], imagem: "https://images.unsplash.com/photo-1517048676732-d65bc937f952?w=600&q=80", endereco: "Duque de Caxias - RJ"},
+        {nome: "Valdir Truck AUTO ELETRICA E ACESSORIOS LTDA", tipo: "ELETRICA", coords: [-22.6704, -43.2742], imagem: "https://images.unsplash.com/photo-1517048676732-d65bc937f952?w=600&q=80", endereco: "Duque de Caxias - RJ"},
+        {nome: "Dex Reboque", tipo: "GUINCHO", coords: [-22.6060, -43.1800], imagem: "https://images.unsplash.com/photo-1493238792000-8113da705763?w=600&q=80", endereco: "Duque de Caxias - RJ"}
+      ],
+      "Chapecó": [
+        {nome: "RODE BEM MECÂNICA - SÓ IVECO", tipo: "MECANICA", coords: [-27.0713, -52.6294], imagem: "https://images.unsplash.com/photo-1486006920555-c77dcf18193c?w=600&q=80", endereco: "Chapecó - SC"},
+        {nome: "Posmovil Chapecó - Oficina Mecanica para Caminhões", tipo: "MECANICA", coords: [-27.0660, -52.6289], imagem: "https://images.unsplash.com/photo-1486006920555-c77dcf18193c?w=600&q=80", endereco: "Chapecó - SC"},
+        {nome: "Maxi Serviços Mecânicos Chapecó", tipo: "MECANICA", coords: [-27.0669, -52.6364], imagem: "https://images.unsplash.com/photo-1486006920555-c77dcf18193c?w=600&q=80", endereco: "Chapecó - SC"},
+        {nome: "ARALDI TRUCK CENTER", tipo: "MECANICA", coords: [-27.0671, -52.6352], imagem: "https://images.unsplash.com/photo-1486006920555-c77dcf18193c?w=600&q=80", endereco: "Chapecó - SC"},
+        {nome: "Amplexo Diesel Service Chapecó - Oficina Mecânica", tipo: "MECANICA", coords: [-27.0647, -52.6369], imagem: "https://images.unsplash.com/photo-1486006920555-c77dcf18193c?w=600&q=80", endereco: "Chapecó - SC"},
+        {nome: "Euro Truck Injeção Eletrônica Diesel", tipo: "ELETRICA", coords: [-27.0634, -52.6381], imagem: "https://images.unsplash.com/photo-1517048676732-d65bc937f952?w=600&q=80", endereco: "Chapecó - SC"}
+      ],
+      "Rolândia": [
+        {nome: "Oficina Mecânica Balan", tipo: "MECANICA", coords: [-23.3025, -51.3543], imagem: "https://images.unsplash.com/photo-1486006920555-c77dcf18193c?w=600&q=80", endereco: "Rolândia - PR"},
+        {nome: "Star Diesel Com e Retífica Motores", tipo: "MECANICA", coords: [-23.3034, -51.3586], imagem: "https://images.unsplash.com/photo-1486006920555-c77dcf18193c?w=600&q=80", endereco: "Rolândia - PR"},
+        {nome: "JotaTratores", tipo: "MECANICA", coords: [-23.3112, -51.3709], imagem: "https://images.unsplash.com/photo-1486006920555-c77dcf18193c?w=600&q=80", endereco: "Rolândia - PR"},
+        {nome: "Auto Elétrica Rolândia", tipo: "ELETRICA", coords: [-23.3115, -51.3729], imagem: "https://images.unsplash.com/photo-1517048676732-d65bc937f952?w=600&q=80", endereco: "Rolândia - PR"},
+        {nome: "JM Auto Socorro - Guincho Rolândia", tipo: "GUINCHO", coords: [-23.2966, -51.3555], imagem: "https://images.unsplash.com/photo-1493238792000-8113da705763?w=600&q=80", endereco: "Rolândia - PR"},
+        {nome: "Guincho Rolândia", tipo: "GUINCHO", coords: [-23.3121, -51.3665], imagem: "https://images.unsplash.com/photo-1493238792000-8113da705763?w=600&q=80", endereco: "Rolândia - PR"},
+        {nome: "Auto Socorro Perucci - Serviços de Reboque/Guincho", tipo: "GUINCHO", coords: [-23.3169, -51.3649], imagem: "https://images.unsplash.com/photo-1493238792000-8113da705763?w=600&q=80", endereco: "Rolândia - PR"}
+      ],
+      "São José dos Pinhais": [
+        {nome: "M&M TRUCK CENTER ALINHAMENTO A LASER E MOLAS", tipo: "MECANICA", coords: [-25.5620, -49.1716], imagem: "https://images.unsplash.com/photo-1486006920555-c77dcf18193c?w=600&q=80", endereco: "São José dos Pinhais - PR"},
+        {nome: "Barão Truck Center", tipo: "AUTOPEÇA", coords: [-25.5800, -49.1780], imagem: "https://images.unsplash.com/photo-1489824904134-891ab64532f1?w=600&q=80", endereco: "São José dos Pinhais - PR"},
+        {nome: "JCA Mecânica Diesel", tipo: "MECANICA", coords: [-25.5461, -49.1856], imagem: "https://images.unsplash.com/photo-1486006920555-c77dcf18193c?w=600&q=80", endereco: "São José dos Pinhais - PR"},
+        {nome: "OFICINA MECÂNICA CAJA DIESEL", tipo: "MECANICA", coords: [-25.5674, -49.1939], imagem: "https://images.unsplash.com/photo-1486006920555-c77dcf18193c?w=600&q=80", endereco: "São José dos Pinhais - PR"},
+        {nome: "TDS Peças e Serviços", tipo: "AUTOPEÇA", coords: [-25.4725, -49.3488], imagem: "https://images.unsplash.com/photo-1489824904134-891ab64532f1?w=600&q=80", endereco: "São José dos Pinhais - PR"},
+        {nome: "Alvenek Auto Elétrica", tipo: "ELETRICA", coords: [-25.4361, -49.3680], imagem: "https://images.unsplash.com/photo-1517048676732-d65bc937f952?w=600&q=80", endereco: "São José dos Pinhais - PR"},
+        {nome: "Auto Elétrica Rodotruck", tipo: "ELETRICA", coords: [-25.5262, -49.3142], imagem: "https://images.unsplash.com/photo-1517048676732-d65bc937f952?w=600&q=80", endereco: "São José dos Pinhais - PR"},
+        {nome: "Auto Elétrica Diesel Gallo", tipo: "ELETRICA", coords: [-25.4485, -49.1280], imagem: "https://images.unsplash.com/photo-1517048676732-d65bc937f952?w=600&q=80", endereco: "São José dos Pinhais - PR"},
+        {nome: "Jota Auto Eletrica", tipo: "ELETRICA", coords: [-25.6069, -49.1706], imagem: "https://images.unsplash.com/photo-1517048676732-d65bc937f952?w=600&q=80", endereco: "São José dos Pinhais - PR"},
+        {nome: "STAICHOK LOCAÇÃO DE CAMINHÃO MUNCK", tipo: "GUINCHO", coords: [-25.3985, -49.1898], imagem: "https://images.unsplash.com/photo-1493238792000-8113da705763?w=600&q=80", endereco: "São José dos Pinhais - PR"},
+        {nome: "SOS Merces (Auto Socorro Merces) Guincho em Curitiba", tipo: "GUINCHO", coords: [-25.4033, -49.2909], imagem: "https://images.unsplash.com/photo-1493238792000-8113da705763?w=600&q=80", endereco: "São José dos Pinhais - PR"},
+        {nome: "Guincho Thiago Berdusco", tipo: "GUINCHO", coords: [-25.5409, -49.2827], imagem: "https://images.unsplash.com/photo-1493238792000-8113da705763?w=600&q=80", endereco: "São José dos Pinhais - PR"},
+        {nome: "Guincho Pesado São José Dos Pinhais 24 Horas", tipo: "GUINCHO", coords: [-25.5736, -49.1537], imagem: "https://images.unsplash.com/photo-1493238792000-8113da705763?w=600&q=80", endereco: "São José dos Pinhais - PR"}
+      ],
+      "Osasco": [
+        {nome: "Garage Truck Center", tipo: "AUTOPEÇA", coords: [-23.5077, -46.7620], imagem: "https://images.unsplash.com/photo-1489824904134-891ab64532f1?w=600&q=80", endereco: "Osasco - SP"},
+        {nome: "Recuperadora Garage Truck Center", tipo: "AUTOPEÇA", coords: [-23.5160, -46.7650], imagem: "https://images.unsplash.com/photo-1489824904134-891ab64532f1?w=600&q=80", endereco: "Osasco - SP"},
+        {nome: "Truck Center MN Pneus", tipo: "BORRACHARIA", coords: [-23.5261, -46.7533], imagem: "https://images.unsplash.com/photo-1486006920555-c77dcf18193c?w=600&q=80", endereco: "Osasco - SP"},
+        {nome: "Nel Auto Mecânica Diesel", tipo: "MECANICA", coords: [-23.5052, -46.7027], imagem: "https://images.unsplash.com/photo-1486006920555-c77dcf18193c?w=600&q=80", endereco: "Osasco - SP"},
+        {nome: "Auto Elétrico Eguchi", tipo: "ELETRICA", coords: [-23.5184, -46.7911], imagem: "https://images.unsplash.com/photo-1517048676732-d65bc937f952?w=600&q=80", endereco: "Osasco - SP"},
+        {nome: "Fk auto elétrica", tipo: "ELETRICA", coords: [-23.4839, -46.7763], imagem: "https://images.unsplash.com/photo-1517048676732-d65bc937f952?w=600&q=80", endereco: "Osasco - SP"},
+        {nome: "Auto Elétrico e Mecânica RG", tipo: "ELETRICA", coords: [-23.5450, -46.8386], imagem: "https://images.unsplash.com/photo-1517048676732-d65bc937f952?w=600&q=80", endereco: "Osasco - SP"},
+        {nome: "Gonçalves Guincho Pesado", tipo: "GUINCHO", coords: [-23.5107, -46.8050], imagem: "https://images.unsplash.com/photo-1493238792000-8113da705763?w=600&q=80", endereco: "Osasco - SP"},
+        {nome: "Delta Guinchos 24 Horas", tipo: "GUINCHO", coords: [-23.5667, -46.8148], imagem: "https://images.unsplash.com/photo-1493238792000-8113da705763?w=600&q=80", endereco: "Osasco - SP"}
+      ],
+      "Canoas": [
+        {nome: "Makro Diesel", tipo: "MECANICA", coords: [-29.8844, -51.1851], imagem: "https://images.unsplash.com/photo-1486006920555-c77dcf18193c?w=600&q=80", endereco: "Canoas - RS"},
+        {nome: "Master Diesel Serviços Mecânicos", tipo: "MECANICA", coords: [-29.8853, -51.1773], imagem: "https://images.unsplash.com/photo-1486006920555-c77dcf18193c?w=600&q=80", endereco: "Canoas - RS"},
+        {nome: "Mecânica Diesel Vabis", tipo: "MECANICA", coords: [-29.8982, -51.1908], imagem: "https://images.unsplash.com/photo-1486006920555-c77dcf18193c?w=600&q=80", endereco: "Canoas - RS"},
+        {nome: "Dorini Mecânica Diesel", tipo: "MECANICA", coords: [-29.9450, -51.1736], imagem: "https://images.unsplash.com/photo-1486006920555-c77dcf18193c?w=600&q=80", endereco: "Canoas - RS"},
+        {nome: "Sobrinho's Mecânica Diesel", tipo: "MECANICA", coords: [-29.9167, -51.1366], imagem: "https://images.unsplash.com/photo-1486006920555-c77dcf18193c?w=600&q=80", endereco: "Canoas - RS"},
+        {nome: "Eletrisol Comércio de Peças e Serviços Ltda", tipo: "AUTOPEÇA", coords: [-29.8607, -51.1747], imagem: "https://images.unsplash.com/photo-1489824904134-891ab64532f1?w=600&q=80", endereco: "Canoas - RS"},
+        {nome: "Auto Elétrica Megatruck", tipo: "ELETRICA", coords: [-29.9102, -51.1970], imagem: "https://images.unsplash.com/photo-1517048676732-d65bc937f952?w=600&q=80", endereco: "Canoas - RS"},
+        {nome: "Brocca Auto Peças e Auto Eletrica", tipo: "AUTOPEÇA", coords: [-29.8945, -51.1705], imagem: "https://images.unsplash.com/photo-1489824904134-891ab64532f1?w=600&q=80", endereco: "Canoas - RS"},
+        {nome: "Jeg Guinchos", tipo: "GUINCHO", coords: [-29.8837, -51.1925], imagem: "https://images.unsplash.com/photo-1493238792000-8113da705763?w=600&q=80", endereco: "Canoas - RS"},
+        {nome: "FC GUINCHO", tipo: "GUINCHO", coords: [-29.9122, -51.1990], imagem: "https://images.unsplash.com/photo-1493238792000-8113da705763?w=600&q=80", endereco: "Canoas - RS"}
+      ],
+      "São Vicente": [
+        {nome: "centro auto motivo MDC", tipo: "AUTOPEÇA", coords: [-23.9767, -46.4787], imagem: "https://images.unsplash.com/photo-1489824904134-891ab64532f1?w=600&q=80", endereco: "São Vicente - SP"},
+        {nome: "H&L Oficina Mecânica", tipo: "MECANICA", coords: [-23.9780, -46.4746], imagem: "https://images.unsplash.com/photo-1486006920555-c77dcf18193c?w=600&q=80", endereco: "São Vicente - SP"},
+        {nome: "L&H Implementos Rodoviários", tipo: "GUINCHO", coords: [-23.9894, -46.4799], imagem: "https://images.unsplash.com/photo-1493238792000-8113da705763?w=600&q=80", endereco: "São Vicente - SP"},
+        {nome: "Oficina Zé do Guincho", tipo: "GUINCHO", coords: [-23.9910, -46.4933], imagem: "https://images.unsplash.com/photo-1493238792000-8113da705763?w=600&q=80", endereco: "São Vicente - SP"}
+      ]
+    };
+
+    const tipoCores = {
+      "ELETRICA": "#e74c3c",
+      "MECANICA": "#3498db",
+      "TACOGRAFO": "#9b59b6",
+      "LAVAÇÃO": "#1abc9c",
+      "AUTOPEÇA": "#f39c12",
+      "BORRACHARIA": "#e67e22",
+      "GUINCHO": "#2ecc71"
+    };
+
+    const tipoDescricao = {
+      "ELETRICA": "Eletrica",
+      "MECANICA": "Mecanica",
+      "TACOGRAFO": "Tacografo",
+      "LAVAÇÃO": "Lavacao",
+      "AUTOPEÇA": "Autopeça",
+      "BORRACHARIA": "Borracharia",
+      "GUINCHO": "Guincho"
+    };
+
+    const tbodyUn = document.querySelector('#unidadesTable tbody');
+    unidades.forEach(u => {
+      const row = tbodyUn.insertRow();
+      row.innerHTML = `<td><strong>${u.nome}</strong><br><small>${u.cidade}</small></td>`;
+      row.onclick = () => {
+        clearMarkers();
+        map.flyTo(u.coords, 12);
+        const icon = u.grande ? grandeIcon : L.icon({iconUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon.png', iconSize: [22,32]});
+        const m = L.marker(u.coords, {icon}).addTo(map).bindPopup(`<b>${u.nome}</b><br>${u.cidade}`);
+        currentMarkers.push(m);
+        if (oficinasPorUnidade[u.nome]) addOficinas(oficinasPorUnidade[u.nome]);
+      };
+    });
+
+    const todasOficinas = Object.values(oficinasPorUnidade).flat().sort((a, b) => a.nome.localeCompare(b.nome));
+    const tbodyOf = document.querySelector('#oficinasTable tbody');
+    todasOficinas.forEach(p => {
+      const row = tbodyOf.insertRow();
+      row.innerHTML = `<td><strong>${p.nome}</strong><br><small>${p.tipo}</small></td>`;
+      row.onclick = () => {
+        clearMarkers();
+        map.flyTo(p.coords, 14);
+        addOfficePopup(p);
+      };
+    });
+
+    const legendDiv = document.getElementById('legend');
+    Object.keys(tipoCores).forEach(tipo => {
+      const item = document.createElement('div');
+      item.className = 'map-legend-item';
+      item.innerHTML = `<div class="map-legend-color" style="background:${tipoCores[tipo]}"></div><span>= ${tipoDescricao[tipo]}</span>`;
+      legendDiv.appendChild(item);
+    });
+
+    function popupHtml(p) {
+      const mapLink = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(p.nome + ' ' + (p.endereco || ''))}`;
+      return `
+        <div class="gm-popup">
+          <img class="gm-img" src="${p.imagem}" alt="${p.nome}">
+          <div class="gm-title">${p.nome}</div>
+          <div class="gm-sub">${p.endereco || ''}<br>Tipo: ${p.tipo}</div>
+          <a class="gm-link" href="${mapLink}" target="_blank">Abrir no Google Maps</a>
+        </div>
+      `;
+    }
+
+    function addOfficePopup(p) {
+      const cor = tipoCores[p.tipo] || "#555";
+      const m = L.circleMarker(p.coords, {
+        radius: 8, color: cor, fillColor: cor, fillOpacity: 0.9, weight: 2
+      }).addTo(map).bindPopup(popupHtml(p));
+      currentMarkers.push(m);
+      m.openPopup();
+    }
+
+    function clearMarkers() {
+      currentMarkers.forEach(m => map.removeLayer(m));
+      currentMarkers = [];
+    }
+
+    function addOficinas(lista) {
+      lista.forEach(p => {
+        const cor = tipoCores[p.tipo] || "#555";
+        const m = L.circleMarker(p.coords, {
+          radius: 8, color: cor, fillColor: cor, fillOpacity: 0.85, weight: 2
+        }).addTo(map).bindPopup(popupHtml(p));
+        currentMarkers.push(m);
+      });
+    }
+
+    function toggleFullscreen() {
+      const el = document.documentElement;
+      if (!document.fullscreenElement) el.requestFullscreen?.();
+      else document.exitFullscreen?.();
+    }
+  </script>
+</body>
+</html>
