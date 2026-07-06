@@ -2,6 +2,7 @@
 <html lang="pt-BR">
 <head>
   <meta charset="UTF-8">
+  <meta charset="UTF-8">
   <title>Filtroamb </title>
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
   <style>
@@ -75,7 +76,7 @@
 
     .fullscreen-btn {
       position: absolute;
-      top: 0px;
+      top: 12px;
       right: 12px;
       z-index: 1000;
       background: white;
@@ -88,8 +89,8 @@
     }
     .map-legend {
       position: absolute;
-      top: 0px;
-      left: 43px;
+      top: 58px;
+      left: 12px;
       z-index: 1000;
       background: rgba(255,255,255,0.96);
       border: 1px solid #d9d9d9;
@@ -231,52 +232,15 @@
     const outras = unidades.filter(u => u.nome !== "Matriz - Araquari").sort((a, b) => a.nome.localeCompare(b.nome));
     unidades = [matriz, ...outras];
 
-    const imgPool = {
-      ELETRICA: [
-        "https://images.unsplash.com/photo-1517048676732-d65bc937f952?w=900&q=85",
-        "https://images.unsplash.com/photo-1517524206127-48bbd363f3d5?w=900&q=85",
-        "https://images.unsplash.com/photo-1483623169948-0f7e4d5c2b0a?w=900&q=85"
-      ],
-      MECANICA: [
-        "https://images.unsplash.com/photo-1486006920555-c77dcf18193c?w=900&q=85",
-        "https://images.unsplash.com/photo-1503376780353-7e6692767b70?w=900&q=85",
-        "https://images.unsplash.com/photo-1492144534655-ae79c964c9d7?w=900&q=85"
-      ],
-      TACOGRAFO: [
-        "https://images.unsplash.com/photo-1517048676732-d65bc937f952?w=900&q=85",
-        "https://images.unsplash.com/photo-1516321318423-f06f85e504b3?w=900&q=85"
-      ],
-      LAVAÇÃO: [
-        "https://images.unsplash.com/photo-1520342868574-5fa3804e551c?w=900&q=85",
-        "https://images.unsplash.com/photo-1508610048659-a06b669e3321?w=900&q=85"
-      ],
-      AUTOPEÇA: [
-        "https://images.unsplash.com/photo-1489824904134-891ab64532f1?w=900&q=85",
-        "https://images.unsplash.com/photo-1520607162513-77705c0f0d4a?w=900&q=85",
-        "https://images.unsplash.com/photo-1494976388531-d1058494cdd8?w=900&q=85"
-      ],
-      BORRACHARIA: [
-        "https://images.unsplash.com/photo-1486006920555-c77dcf18193c?w=900&q=85",
-        "https://images.unsplash.com/photo-1515923163385-2b9b1ed48b5f?w=900&q=85",
-        "https://images.unsplash.com/photo-1503376780353-7e6692767b70?w=900&q=85"
-      ],
-      GUINCHO: [
-        "https://images.unsplash.com/photo-1493238792000-8113da705763?w=900&q=85",
-        "https://images.unsplash.com/photo-1503376780353-7e6692767b70?w=900&q=85",
-        "https://images.unsplash.com/photo-1486006920555-c77dcf18193c?w=900&q=85"
-      ]
+    const imgByType = {
+      ELETRICA: "https://images.unsplash.com/photo-1517048676732-d65bc937f952?w=900&q=85",
+      MECANICA: "https://images.unsplash.com/photo-1486006920555-c77dcf18193c?w=900&q=85",
+      TACOGRAFO: "https://images.unsplash.com/photo-1517048676732-d65bc937f952?w=900&q=85",
+      LAVAÇÃO: "https://images.unsplash.com/photo-1520342868574-5fa3804e551c?w=900&q=85",
+      AUTOPEÇA: "https://images.unsplash.com/photo-1489824904134-891ab64532f1?w=900&q=85",
+      BORRACHARIA: "https://images.unsplash.com/photo-1486006920555-c77dcf18193c?w=900&q=85",
+      GUINCHO: "https://images.unsplash.com/photo-1493238792000-8113da705763?w=900&q=85"
     };
-
-    function hashCode(str) {
-      let h = 0;
-      for (let i = 0; i < str.length; i++) h = ((h << 5) - h) + str.charCodeAt(i), h |= 0;
-      return Math.abs(h);
-    }
-
-    function imageForOffice(p) {
-      const pool = imgPool[p.tipo] || imgPool.MECANICA;
-      return pool[hashCode(p.nome + "|" + p.endereco) % pool.length];
-    }
 
     const oficinasPorUnidade = {
       "Matriz - Araquari": [
@@ -325,6 +289,124 @@
         {nome: "Truck Diag Elétrica Diesel", tipo: "ELETRICA", coords: [-26.4055, -48.7708], endereco: "Araquari - SC"},
         {nome: "Chip Truck - Auto Elétrica de Caminhões", tipo: "ELETRICA", coords: [-26.2204, -48.9174], endereco: "Araquari - SC"},
         {nome: "AUTO ELETRICA ELETROTRUCK", tipo: "ELETRICA", coords: [-26.2315, -48.9177], endereco: "Araquari - SC"}
+      ],
+      "Rodeio": [
+        {nome: "OFICINA T2 TECNODUE", tipo: "MECANICA", coords: [-26.9084, -49.3664], endereco: "Rodeio - SC"},
+        {nome: "Oficina do Johnny", tipo: "MECANICA", coords: [-26.9094, -49.3671], endereco: "Rodeio - SC"},
+        {nome: "Auto Mecânica Rogério", tipo: "MECANICA", coords: [-26.8443, -49.2821], endereco: "Rodeio - SC"},
+        {nome: "Mecânica Bertoldi ldta me", tipo: "MECANICA", coords: [-26.9486, -49.3689], endereco: "Rodeio - SC"},
+        {nome: "Rudi Guincho 24 Horas | Leves e Pesados", tipo: "GUINCHO", coords: [-26.8613, -49.0981], endereco: "Rodeio - SC"},
+        {nome: "BR Mecânica Diesel", tipo: "MECANICA", coords: [-26.8646, -49.0895], endereco: "Rodeio - SC"},
+        {nome: "Marchetti Truck Center", tipo: "AUTOPEÇA", coords: [-26.8613, -49.0951], endereco: "Rodeio - SC"},
+        {nome: "PR Mecânica Diesel", tipo: "MECANICA", coords: [-26.8611, -49.0451], endereco: "Rodeio - SC"},
+        {nome: "Mecânica Mello Auto Diesel", tipo: "MECANICA", coords: [-26.8304, -49.2625], endereco: "Rodeio - SC"}
+      ],
+      "Pescaria Brava": [
+        {nome: "Roda Brasil Mecânica de Carretas - BR101", tipo: "MECANICA", coords: [-28.4271, -48.9182], endereco: "Pescaria Brava - SC"},
+        {nome: "Mecânica Sul Forte Truck Service", tipo: "MECANICA", coords: [-28.4587, -48.9857], endereco: "Pescaria Brava - SC"},
+        {nome: "Messilva Mecânica Scania Silva", tipo: "MECANICA", coords: [-28.4581, -48.9861], endereco: "Pescaria Brava - SC"},
+        {nome: "Roda Brasil Molas e Mecânica de Carretas - Tubarão", tipo: "MECANICA", coords: [-28.4659, -48.9911], endereco: "Pescaria Brava - SC"},
+        {nome: "CRILUB - Pneus e Troca de Óleo", tipo: "BORRACHARIA", coords: [-28.4754, -48.9951], endereco: "Pescaria Brava - SC"},
+        {nome: "Mêcanica Três Amigos", tipo: "MECANICA", coords: [-28.4672, -48.9961], endereco: "Pescaria Brava - SC"},
+        {nome: "Mecânica Só Diesel Alemão", tipo: "MECANICA", coords: [-28.4633, -49.0209], endereco: "Pescaria Brava - SC"},
+        {nome: "Cordini Truck Diesel, Oficina de Caminhões", tipo: "MECANICA", coords: [-28.4672, -49.0209], endereco: "Pescaria Brava - SC"},
+        {nome: "Bj Mecânica de Caminhões", tipo: "MECANICA", coords: [-28.4744, -49.0291], endereco: "Pescaria Brava - SC"},
+        {nome: "Messiltu Truck Center", tipo: "MECANICA", coords: [-28.4751, -49.0311], endereco: "Pescaria Brava - SC"},
+        {nome: "Elite Truck Diesel Mecânica", tipo: "MECANICA", coords: [-28.4953, -49.0411], endereco: "Pescaria Brava - SC"},
+        {nome: "Brutus Mecânica Truck Diesel", tipo: "MECANICA", coords: [-28.5071, -49.0481], endereco: "Pescaria Brava - SC"},
+        {nome: "Niltinho Motores Diesel", tipo: "MECANICA", coords: [-27.3135, -48.5746], endereco: "Pescaria Brava - SC"},
+        {nome: "Mecanica e auto socorro André", tipo: "MECANICA", coords: [-27.3157, -48.5572], endereco: "Pescaria Brava - SC"},
+        {nome: "SMJ GUINCHOS E MIRANDA BATERIAS", tipo: "GUINCHO", coords: [-27.3478, -48.5962], endereco: "Pescaria Brava - SC"},
+        {nome: "Mecânica Sandro", tipo: "MECANICA", coords: [-27.3995, -48.6308], endereco: "Pescaria Brava - SC"},
+        {nome: "Recar Transporte e Ar Condicionado", tipo: "MECANICA", coords: [-27.3966, -48.6063], endereco: "Pescaria Brava - SC"}
+      ],
+      "Governador Celso Ramos": [
+        {nome: "BORRACHARIA MOVEL QUEIROZ AUTOSOCORRO", tipo: "BORRACHARIA", coords: [-27.3619, -48.6371], endereco: "Governador Celso Ramos - SC"},
+        {nome: "Auto Eletrica Novo Tempo", tipo: "ELETRICA", coords: [-27.4209, -48.6235], endereco: "Governador Celso Ramos - SC"},
+        {nome: "Mecânica Beto", tipo: "MECANICA", coords: [-27.4234, -48.6253], endereco: "Governador Celso Ramos - SC"},
+        {nome: "Auto Socorro Marcinei - Caminhões", tipo: "MECANICA", coords: [-27.2257, -48.6141], endereco: "Governador Celso Ramos - SC"},
+        {nome: "OFICINA MECÂNICA CAMINHÃO JR REPAROS", tipo: "MECANICA", coords: [-27.2591, -48.7071], endereco: "Governador Celso Ramos - SC"},
+        {nome: "Mecânica Silva de Caminhão", tipo: "MECANICA", coords: [-27.2554, -48.7259], endereco: "Governador Celso Ramos - SC"},
+        {nome: "Rio Vale Diesel", tipo: "MECANICA", coords: [-27.2661, -48.7951], endereco: "Governador Celso Ramos - SC"}
+      ],
+      "Duque de Caxias": [
+        {nome: "Oficina Mecânica Lindra Nadir", tipo: "MECANICA", coords: [-22.6691, -43.2964], endereco: "Duque de Caxias - RJ"},
+        {nome: "Mecanica diesel Marcelo", tipo: "MECANICA", coords: [-22.6634, -43.3111], endereco: "Duque de Caxias - RJ"},
+        {nome: "VN AUTOMECÂNICA A DIESEL", tipo: "MECANICA", coords: [-22.6665, -43.2911], endereco: "Duque de Caxias - RJ"},
+        {nome: "Oficina Trucks Control em Duque de Caxias", tipo: "MECANICA", coords: [-22.6641, -43.2718], endereco: "Duque de Caxias - RJ"},
+        {nome: "Jorge Guedes", tipo: "MECANICA", coords: [-22.6484, -43.2574], endereco: "Duque de Caxias - RJ"},
+        {nome: "Dézio Auto Mecânica Diesel", tipo: "MECANICA", coords: [-22.6643, -43.2655], endereco: "Duque de Caxias - RJ"},
+        {nome: "M.S TRUCK", tipo: "MECANICA", coords: [-22.6726, -43.2932], endereco: "Duque de Caxias - RJ"},
+        {nome: "Global Manutenção Veicular", tipo: "MECANICA", coords: [-22.6861, -43.2925], endereco: "Duque de Caxias - RJ"},
+        {nome: "J L S Mecanica Diesel", tipo: "MECANICA", coords: [-22.6981, -43.2706], endereco: "Duque de Caxias - RJ"},
+        {nome: "S.O.S DIESEL 24 HORAS", tipo: "MECANICA", coords: [-22.6375, -43.2999], endereco: "Duque de Caxias - RJ"},
+        {nome: "BRG Mecanica Diesel", tipo: "MECANICA", coords: [-22.6362, -43.2678], endereco: "Duque de Caxias - RJ"},
+        {nome: "Borracharia Movel | Socorro 24h WJF", tipo: "BORRACHARIA", coords: [-22.7529, -43.2734], endereco: "Duque de Caxias - RJ"},
+        {nome: "Borracheiro de São José", tipo: "BORRACHARIA", coords: [-22.8892, -43.2204], endereco: "Duque de Caxias - RJ"},
+        {nome: "Eletroforce Elétrica Diesel", tipo: "ELETRICA", coords: [-22.6685, -43.2749], endereco: "Duque de Caxias - RJ"},
+        {nome: "Valdir Truck AUTO ELETRICA E ACESSORIOS LTDA", tipo: "ELETRICA", coords: [-22.6704, -43.2742], endereco: "Duque de Caxias - RJ"},
+        {nome: "Dex Reboque", tipo: "GUINCHO", coords: [-22.6060, -43.1800], endereco: "Duque de Caxias - RJ"}
+      ],
+      "Chapecó": [
+        {nome: "RODE BEM MECÂNICA - SÓ IVECO", tipo: "MECANICA", coords: [-27.0713, -52.6294], endereco: "Chapecó - SC"},
+        {nome: "Posmovil Chapecó - Oficina Mecanica para Caminhões", tipo: "MECANICA", coords: [-27.0660, -52.6289], endereco: "Chapecó - SC"},
+        {nome: "Maxi Serviços Mecânicos Chapecó", tipo: "MECANICA", coords: [-27.0669, -52.6364], endereco: "Chapecó - SC"},
+        {nome: "ARALDI TRUCK CENTER", tipo: "MECANICA", coords: [-27.0671, -52.6352], endereco: "Chapecó - SC"},
+        {nome: "Amplexo Diesel Service Chapecó - Oficina Mecânica", tipo: "MECANICA", coords: [-27.0647, -52.6369], endereco: "Chapecó - SC"},
+        {nome: "Euro Truck Injeção Eletrônica Diesel", tipo: "ELETRICA", coords: [-27.0634, -52.6381], endereco: "Chapecó - SC"}
+      ],
+      "Rolândia": [
+        {nome: "Oficina Mecânica Balan", tipo: "MECANICA", coords: [-23.3025, -51.3543], endereco: "Rolândia - PR"},
+        {nome: "Star Diesel Com e Retífica Motores", tipo: "MECANICA", coords: [-23.3034, -51.3586], endereco: "Rolândia - PR"},
+        {nome: "JotaTratores", tipo: "MECANICA", coords: [-23.3112, -51.3709], endereco: "Rolândia - PR"},
+        {nome: "Auto Elétrica Rolândia", tipo: "ELETRICA", coords: [-23.3115, -51.3729], endereco: "Rolândia - PR"},
+        {nome: "JM Auto Socorro - Guincho Rolândia", tipo: "GUINCHO", coords: [-23.2966, -51.3555], endereco: "Rolândia - PR"},
+        {nome: "Guincho Rolândia", tipo: "GUINCHO", coords: [-23.3121, -51.3665], endereco: "Rolândia - PR"},
+        {nome: "Auto Socorro Perucci - Serviços de Reboque/Guincho", tipo: "GUINCHO", coords: [-23.3169, -51.3649], endereco: "Rolândia - PR"}
+      ],
+      "São José dos Pinhais": [
+        {nome: "M&M TRUCK CENTER ALINHAMENTO A LASER E MOLAS", tipo: "MECANICA", coords: [-25.5620, -49.1716], endereco: "São José dos Pinhais - PR"},
+        {nome: "Barão Truck Center", tipo: "AUTOPEÇA", coords: [-25.5800, -49.1780], endereco: "São José dos Pinhais - PR"},
+        {nome: "JCA Mecânica Diesel", tipo: "MECANICA", coords: [-25.5461, -49.1856], endereco: "São José dos Pinhais - PR"},
+        {nome: "OFICINA MECÂNICA CAJA DIESEL", tipo: "MECANICA", coords: [-25.5674, -49.1939], endereco: "São José dos Pinhais - PR"},
+        {nome: "TDS Peças e Serviços", tipo: "AUTOPEÇA", coords: [-25.4725, -49.3488], endereco: "São José dos Pinhais - PR"},
+        {nome: "Alvenek Auto Elétrica", tipo: "ELETRICA", coords: [-25.4361, -49.3680], endereco: "São José dos Pinhais - PR"},
+        {nome: "Auto Elétrica Rodotruck", tipo: "ELETRICA", coords: [-25.5262, -49.3142], endereco: "São José dos Pinhais - PR"},
+        {nome: "Auto Elétrica Diesel Gallo", tipo: "ELETRICA", coords: [-25.4485, -49.1280], endereco: "São José dos Pinhais - PR"},
+        {nome: "Jota Auto Eletrica", tipo: "ELETRICA", coords: [-25.6069, -49.1706], endereco: "São José dos Pinhais - PR"},
+        {nome: "STAICHOK LOCAÇÃO DE CAMINHÃO MUNCK", tipo: "GUINCHO", coords: [-25.3985, -49.1898], endereco: "São José dos Pinhais - PR"},
+        {nome: "SOS Merces (Auto Socorro Merces) Guincho em Curitiba", tipo: "GUINCHO", coords: [-25.4033, -49.2909], endereco: "São José dos Pinhais - PR"},
+        {nome: "Guincho Thiago Berdusco", tipo: "GUINCHO", coords: [-25.5409, -49.2827], endereco: "São José dos Pinhais - PR"},
+        {nome: "Guincho Pesado São José Dos Pinhais 24 Horas", tipo: "GUINCHO", coords: [-25.5736, -49.1537], endereco: "São José dos Pinhais - PR"}
+      ],
+      "Osasco": [
+        {nome: "Garage Truck Center", tipo: "AUTOPEÇA", coords: [-23.5077, -46.7620], endereco: "Osasco - SP"},
+        {nome: "Recuperadora Garage Truck Center", tipo: "AUTOPEÇA", coords: [-23.5160, -46.7650], endereco: "Osasco - SP"},
+        {nome: "Truck Center MN Pneus", tipo: "BORRACHARIA", coords: [-23.5261, -46.7533], endereco: "Osasco - SP"},
+        {nome: "Nel Auto Mecânica Diesel", tipo: "MECANICA", coords: [-23.5052, -46.7027], endereco: "Osasco - SP"},
+        {nome: "Auto Elétrico Eguchi", tipo: "ELETRICA", coords: [-23.5184, -46.7911], endereco: "Osasco - SP"},
+        {nome: "Fk auto elétrica", tipo: "ELETRICA", coords: [-23.4839, -46.7763], endereco: "Osasco - SP"},
+        {nome: "Auto Elétrico e Mecânica RG", tipo: "ELETRICA", coords: [-23.5450, -46.8386], endereco: "Osasco - SP"},
+        {nome: "Gonçalves Guincho Pesado", tipo: "GUINCHO", coords: [-23.5107, -46.8050], endereco: "Osasco - SP"},
+        {nome: "Delta Guinchos 24 Horas", tipo: "GUINCHO", coords: [-23.5667, -46.8148], endereco: "Osasco - SP"}
+      ],
+      "Canoas": [
+        {nome: "Makro Diesel", tipo: "MECANICA", coords: [-29.8844, -51.1851], endereco: "Canoas - RS"},
+        {nome: "Master Diesel Serviços Mecânicos", tipo: "MECANICA", coords: [-29.8853, -51.1773], endereco: "Canoas - RS"},
+        {nome: "Mecânica Diesel Vabis", tipo: "MECANICA", coords: [-29.8982, -51.1908], endereco: "Canoas - RS"},
+        {nome: "Dorini Mecânica Diesel", tipo: "MECANICA", coords: [-29.9450, -51.1736], endereco: "Canoas - RS"},
+        {nome: "Sobrinho's Mecânica Diesel", tipo: "MECANICA", coords: [-29.9167, -51.1366], endereco: "Canoas - RS"},
+        {nome: "Eletrisol Comércio de Peças e Serviços Ltda", tipo: "AUTOPEÇA", coords: [-29.8607, -51.1747], endereco: "Canoas - RS"},
+        {nome: "Auto Elétrica Megatruck", tipo: "ELETRICA", coords: [-29.9102, -51.1970], endereco: "Canoas - RS"},
+        {nome: "Brocca Auto Peças e Auto Eletrica", tipo: "AUTOPEÇA", coords: [-29.8945, -51.1705], endereco: "Canoas - RS"},
+        {nome: "Jeg Guinchos", tipo: "GUINCHO", coords: [-29.8837, -51.1925], endereco: "Canoas - RS"},
+        {nome: "FC GUINCHO", tipo: "GUINCHO", coords: [-29.9122, -51.1990], endereco: "Canoas - RS"}
+      ],
+      "São Vicente": [
+        {nome: "centro auto motivo MDC", tipo: "AUTOPEÇA", coords: [-23.9767, -46.4787], endereco: "São Vicente - SP"},
+        {nome: "H&L Oficina Mecânica", tipo: "MECANICA", coords: [-23.9780, -46.4746], endereco: "São Vicente - SP"},
+        {nome: "L&H Implementos Rodoviários", tipo: "GUINCHO", coords: [-23.9894, -46.4799], endereco: "São Vicente - SP"},
+        {nome: "Oficina Zé do Guincho", tipo: "GUINCHO", coords: [-23.9910, -46.4933], endereco: "São Vicente - SP"}
       ]
     };
 
@@ -382,18 +464,15 @@
       legendDiv.appendChild(item);
     });
 
-    function openGoogleMaps(p) {
-      window.open(`https://www.google.com/maps?q=${p.coords[0]},${p.coords[1]}`, '_blank', 'noopener,noreferrer');
-    }
-
     function popupHtml(p) {
-      const imageUrl = imageForOffice(p);
+      const mapLink = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(p.nome + ' ' + (p.endereco || ''))}`;
+      const imageUrl = imgByType[p.tipo] || imgByType.MECANICA;
       return `
         <div class="gm-popup">
           <img class="gm-img" src="${imageUrl}" alt="${p.nome}">
           <div class="gm-title">${p.nome}</div>
           <div class="gm-sub">${p.endereco || ''}<br>Tipo: ${p.tipo}</div>
-          <a class="gm-link" href="#" onclick='openGoogleMaps(${JSON.stringify(p)}); return false;'>Ver no Google Maps</a>
+          <a class="gm-link" href="${mapLink}" target="_blank">Abrir no Google Maps</a>
         </div>
       `;
     }
