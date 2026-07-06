@@ -1,0 +1,461 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <title>Filtroamb </title>
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+  <style>
+    * { box-sizing: border-box; }
+    html, body {
+      margin: 0;
+      width: 100%;
+      height: 100%;
+      overflow: hidden;
+      font-family: 'Segoe UI', system-ui, Arial, sans-serif;
+      background: #f4f6f8;
+    }
+    body {
+      display: flex;
+    }
+    #sidebar {
+      width: 340px;
+      background: #ffffff;
+      border-right: 1px solid #e0e0e0;
+      display: flex;
+      flex-direction: column;
+      box-shadow: 2px 0 8px rgba(0,0,0,0.05);
+      overflow-y: auto;
+      height: 100vh;
+      flex-shrink: 0;
+    }
+    .header {
+      background: #0d5c2e;
+      color: white;
+      padding: 22px 24px;
+      text-align: center;
+      flex-shrink: 0;
+    }
+    .header h1 {
+      margin: 0;
+      font-size: 1.35rem;
+      font-weight: 600;
+      letter-spacing: 0.5px;
+    }
+    .header p {
+      margin: 6px 0 0;
+      font-size: 0.85rem;
+      opacity: 0.85;
+    }
+    .section {
+      margin: 12px 16px;
+    }
+    details {
+      background: #fff;
+      border: 1px solid #e0e0e0;
+      border-radius: 8px;
+      margin-bottom: 12px;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.06);
+    }
+    summary {
+      padding: 14px 18px;
+      font-weight: 600;
+      font-size: 0.95rem;
+      cursor: pointer;
+      background: #f8f9fa;
+      border-radius: 8px;
+      color: #0d5c2e;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    summary:hover {
+      background: #f0f4f0;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.9rem;
+    }
+    td {
+      padding: 13px 18px;
+      border-bottom: 1px solid #f0f0f0;
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+    td:hover {
+      background: #f0f7f0;
+    }
+    .info {
+      padding: 16px 18px;
+      font-size: 0.82rem;
+      color: #555;
+      background: #f8f9fa;
+      border-radius: 0 0 8px 8px;
+      flex-shrink: 0;
+    }
+    .legend {
+      padding: 12px 18px;
+      background: #fafafa;
+      border-top: 1px solid #eee;
+      border-radius: 0 0 8px 8px;
+    }
+    .legend-title {
+      font-size: 0.8rem;
+      font-weight: 600;
+      color: #444;
+      margin-bottom: 8px;
+    }
+    .legend-item {
+      display: flex;
+      align-items: center;
+      margin-bottom: 5px;
+      font-size: 0.82rem;
+    }
+    .legend-color {
+      width: 13px;
+      height: 13px;
+      border-radius: 50%;
+      margin-right: 9px;
+      border: 1px solid #ccc;
+    }
+    #map {
+      flex: 1;
+      height: 100vh;
+      border-left: 1px solid #ddd;
+    }
+    .leaflet-popup-content-wrapper {
+      border-radius: 8px;
+      box-shadow: 0 3px 10px rgba(0,0,0,0.15);
+    }
+    .leaflet-popup-content {
+      font-size: 0.9rem;
+      line-height: 1.4;
+    }
+
+    .fullscreen-btn {
+      position: absolute;
+      top: 12px;
+      right: 12px;
+      z-index: 1000;
+      background: white;
+      border: 1px solid #ccc;
+      border-radius: 6px;
+      padding: 8px 10px;
+      cursor: pointer;
+      font-size: 14px;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.15);
+    }
+    .fullscreen-btn:hover {
+      background: #f2f2f2;
+    }
+    .map-wrapper {
+      position: relative;
+      flex: 1;
+      height: 100vh;
+    }
+  </style>
+</head>
+<body>
+  <div id="sidebar">
+    <div class="header">
+      <h1>Filtroamb-Unidades</h1>
+      <p>Soluções Ambientais</p>
+    </div>
+
+    <div class="section">
+      <details open>
+        <summary>📍 Unidades</summary>
+        <table id="unidadesTable"><tbody></tbody></table>
+      </details>
+
+      <details>
+        <summary>🔧 Oficinas Parceiras</summary>
+        <table id="oficinasTable"><tbody></tbody></table>
+        <div class="legend">
+          <div class="legend-title">Tipos de Oficina</div>
+          <div id="legend"></div>
+        </div>
+      </details>
+    </div>
+
+    <div class="info">
+      Mapa Criado por: Victor E. Silveira
+    </div>
+  </div>
+
+  <div class="map-wrapper">
+    <button class="fullscreen-btn" onclick="toggleFullscreen()">⛶ Tela cheia</button>
+    <div id="map"></div>
+  </div>
+
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+  <script>
+    const map = L.map('map').setView([-26, -50], 6.5);
+
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+      attribution: '© OpenStreetMap | Filtroamb'
+    }).addTo(map);
+
+    let currentMarkers = [];
+
+    const grandeIcon = L.icon({
+      iconUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon.png',
+      shadowUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png',
+      iconSize: [38, 55], iconAnchor: [19, 55], popupAnchor: [0, -45]
+    });
+
+    let unidades = [
+      {nome: "Matriz - Araquari", endereco: "Rod. BR 280, 4425 - Corveta", cidade: "Araquari - SC", coords: [-26.366, -48.845], oficinas: 45, grande: true},
+      {nome: "Chapecó", coords: [-27.1004, -52.6152], oficinas: 12, grande: false},
+      {nome: "São Vicente", coords: [-23.9631, -46.3919], oficinas: 8, grande: false},
+      {nome: "Canoas", coords: [-29.9094, -51.1738], oficinas: 15, grande: false},
+      {nome: "Osasco", coords: [-23.5329, -46.7917], oficinas: 10, grande: false},
+      {nome: "São José dos Pinhais", coords: [-25.5313, -49.2031], oficinas: 14, grande: false},
+      {nome: "Rolândia", coords: [-23.3093, -51.3692], oficinas: 9, grande: false},
+      {nome: "Pescaria Brava", coords: [-28.3967, -48.8861], oficinas: 18, grande: false},
+      {nome: "Duque de Caxias", coords: [-22.7856, -43.3117], oficinas: 16, grande: false},
+      {nome: "Governador Celso Ramos", coords: [-27.3174, -48.5565], oficinas: 7, grande: false},
+      {nome: "Rodeio", coords: [-26.9224, -49.3640], oficinas: 9, grande: false}
+    ];
+
+    const matriz = unidades.find(u => u.nome === "Matriz - Araquari");
+    const outras = unidades.filter(u => u.nome !== "Matriz - Araquari")
+                           .sort((a, b) => a.nome.localeCompare(b.nome));
+    unidades = [matriz, ...outras];
+
+    const oficinasPorUnidade = {
+      "Matriz - Araquari": [
+        {nome: "Tec.Sat Sistemas", tipo: "ELETRICA", coords: [-26.4156, -48.7852]},
+        {nome: "Mecânica D.A. Diesel", tipo: "MECANICA", coords: [-26.4174, -48.7932]},
+        {nome: "Truck Diag Elétrica Diesel", tipo: "ELETRICA", coords: [-26.4165, -48.7773]},
+        {nome: "Mecânica João Grandão", tipo: "MECANICA", coords: [-26.4153, -48.7712]},
+        {nome: "Mecânica Dela Diesel - Araquari", tipo: "MECANICA", coords: [-26.4422, -48.8101]},
+        {nome: "Dicave | Volvo Caminhões - Joinville", tipo: "MECANICA", coords: [-26.4366, -48.8115]},
+        {nome: "Air Truck", tipo: "MECANICA", coords: [-26.4353, -48.8104]},
+        {nome: "Lorenzi Tacógrafos", tipo: "TACOGRAFO", coords: [-26.4344, -48.8117]},
+        {nome: "Eixo Sul Lavação", tipo: "LAVAÇÃO", coords: [-26.4347, -48.8127]},
+        {nome: "Diferenciais Guaramirim", tipo: "MECANICA", coords: [-26.4346, -48.8115]},
+        {nome: "Assis Caminhões", tipo: "MECANICA", coords: [-26.4341, -48.8156]},
+        {nome: "Escapamentos Catarina Auto Center", tipo: "AUTOPEÇA", coords: [-26.2809, -48.8494]},
+        {nome: "Caminhão & Cia", tipo: "MECANICA", coords: [-26.2688, -48.8491]},
+        {nome: "Oficina Camarão - Funilaria de Caminhões em Joinville", tipo: "MECANICA", coords: [-26.2654, -48.8566]},
+        {nome: "Truck Pneus Joinville", tipo: "BORRACHARIA", coords: [-26.2495, -48.8649]},
+        {nome: "Bilk Diesel Mecânica Diesel", tipo: "MECANICA", coords: [-26.2909, -48.9115]},
+        {nome: "Valdiesel Mecânica", tipo: "MECANICA", coords: [-26.2091, -48.9134]},
+        {nome: "Joinville Guincho", tipo: "GUINCHO", coords: [-26.2283, -48.8317]},
+        {nome: "XANDE Munck, Guincho e Auto Socorro", tipo: "GUINCHO", coords: [-26.2767, -48.8035]},
+        {nome: "Auto Socorro JM - Guinchos 24 horas", tipo: "GUINCHO", coords: [-26.2724, -48.8751]},
+        {nome: "Rodrigo Guincho", tipo: "GUINCHO", coords: [-26.3308, -48.8346]},
+        {nome: "GUINCHO ITAUM", tipo: "GUINCHO", coords: [-26.3305, -48.8328]},
+        {nome: "Prants Car Guincho Automotivo e Caminhões", tipo: "GUINCHO", coords: [-26.3321, -48.8192]},
+        {nome: "Souza guincho", tipo: "GUINCHO", coords: [-26.3381, -48.8152]},
+        {nome: "Lima guincho", tipo: "GUINCHO", coords: [-26.3339, -48.8058]},
+        {nome: "Guincho Rampaville", tipo: "GUINCHO", coords: [-26.3731, -48.8259]},
+        {nome: "Guincho Araquari e Auto peças e compra e venda de Sucatas", tipo: "GUINCHO", coords: [-26.3959, -48.7947]},
+        {nome: "JD Guinchos", tipo: "GUINCHO", coords: [-26.4136, -48.7947]},
+        {nome: "Brayan Guincho pesado e Transporte 24h", tipo: "GUINCHO", coords: [-26.3432, -48.7682]},
+        {nome: "Beto Borracharia Móvel 24h", tipo: "BORRACHARIA", coords: [-26.3118, -48.9128]},
+        {nome: "Bosch Car Service - Auto Mecânica Dorival", tipo: "MECANICA", coords: [-26.3268, -48.8373]},
+        {nome: "BORRACHARIA GODINHO 24h", tipo: "BORRACHARIA", coords: [-26.3561, -48.8464]},
+        {nome: "Borracharia do Zinho SOS", tipo: "BORRACHARIA", coords: [-26.3698, -48.8572]},
+        {nome: "BORRACHARIA MÓVEL FIGUEREDO", tipo: "BORRACHARIA", coords: [-26.4311, -48.8045]},
+        {nome: "Borracharia e mecânica pais e filhos", tipo: "BORRACHARIA", coords: [-26.1931, -48.9197]},
+        {nome: "BORRACHARIA MÓVEL", tipo: "BORRACHARIA", coords: [-26.3984, -48.8072]},
+        {nome: "Auto elétrica Baterias Rodrigues", tipo: "ELETRICA", coords: [-26.3961, -48.7984]},
+        {nome: "Fênix auto elétrica e acessórios", tipo: "ELETRICA", coords: [-26.4333, -48.8115]},
+        {nome: "Auto elétrica Martins LTDA", tipo: "ELETRICA", coords: [-26.4341, -48.8137]},
+        {nome: "Hazure Sul", tipo: "MECANICA", coords: [-26.3761, -48.8407]},
+        {nome: "Michel Elétrica Diesel", tipo: "ELETRICA", coords: [-26.3761, -48.8512]},
+        {nome: "Michel Elétrica Diesel(MATRIZ)", tipo: "ELETRICA", coords: [-26.3538, -48.8598]},
+        {nome: "Truck Diag Elétrica Diesel", tipo: "ELETRICA", coords: [-26.4055, -48.7708]},
+        {nome: "Chip Truck - Auto Elétrica de Caminhões", tipo: "ELETRICA", coords: [-26.2204, -48.9174]},
+        {nome: "AUTO ELETRICA ELETROTRUCK", tipo: "ELETRICA", coords: [-26.2315, -48.9177]}
+      ],
+      "Rodeio": [
+        {nome: "OFICINA T2 TECNODUE", tipo: "MECANICA", coords: [-26.9084, -49.3664]},
+        {nome: "Oficina do Johnny", tipo: "MECANICA", coords: [-26.9094, -49.3671]},
+        {nome: "Auto Mecânica Rogério", tipo: "MECANICA", coords: [-26.8443, -49.2821]},
+        {nome: "Mecânica Bertoldi ldta me", tipo: "MECANICA", coords: [-26.9486, -49.3689]},
+        {nome: "Rudi Guincho 24 Horas | Leves e Pesados", tipo: "GUINCHO", coords: [-26.8613, -49.0981]},
+        {nome: "BR Mecânica Diesel", tipo: "MECANICA", coords: [-26.8646, -49.0895]},
+        {nome: "Marchetti Truck Center", tipo: "AUTOPEÇA", coords: [-26.8613, -49.0951]},
+        {nome: "PR Mecânica Diesel", tipo: "MECANICA", coords: [-26.8611, -49.0451]},
+        {nome: "Mecânica Mello Auto Diesel", tipo: "MECANICA", coords: [-26.8304, -49.2625]}
+      ],
+      "Pescaria Brava": [
+        {nome: "Roda Brasil Mecânica de Carretas - BR101", tipo: "MECANICA", coords: [-28.4271, -48.9182]},
+        {nome: "Mecânica Sul Forte Truck Service", tipo: "MECANICA", coords: [-28.4587, -48.9857]},
+        {nome: "Messilva Mecânica Scania Silva", tipo: "MECANICA", coords: [-28.4581, -48.9861]},
+        {nome: "Roda Brasil Molas e Mecânica de Carretas - Tubarão", tipo: "MECANICA", coords: [-28.4659, -48.9911]},
+        {nome: "CRILUB - Pneus e Troca de Óleo", tipo: "BORRACHARIA", coords: [-28.4754, -48.9951]},
+        {nome: "Mêcanica Três Amigos", tipo: "MECANICA", coords: [-28.4672, -48.9961]},
+        {nome: "Mecânica Só Diesel Alemão", tipo: "MECANICA", coords: [-28.4633, -49.0209]},
+        {nome: "Cordini Truck Diesel, Oficina de Caminhões", tipo: "MECANICA", coords: [-28.4672, -49.0209]},
+        {nome: "Bj Mecânica de Caminhões", tipo: "MECANICA", coords: [-28.4744, -49.0291]},
+        {nome: "Messiltu Truck Center", tipo: "MECANICA", coords: [-28.4751, -49.0311]},
+        {nome: "Elite Truck Diesel Mecânica", tipo: "MECANICA", coords: [-28.4953, -49.0411]},
+        {nome: "Brutus Mecânica Truck Diesel", tipo: "MECANICA", coords: [-28.5071, -49.0481]},
+        {nome: "Niltinho Motores Diesel", tipo: "MECANICA", coords: [-27.3135, -48.5746]},
+        {nome: "Mecanica e auto socorro André", tipo: "MECANICA", coords: [-27.3157, -48.5572]},
+        {nome: "SMJ GUINCHOS E MIRANDA BATERIAS", tipo: "GUINCHO", coords: [-27.3478, -48.5962]},
+        {nome: "Mecânica Sandro", tipo: "MECANICA", coords: [-27.3995, -48.6308]},
+        {nome: "Recar Transporte e Ar Condicionado", tipo: "MECANICA", coords: [-27.3966, -48.6063]}
+      ],
+      "Governador Celso Ramos": [
+        {nome: "BORRACHARIA MOVEL QUEIROZ AUTOSOCORRO", tipo: "BORRACHARIA", coords: [-27.3619, -48.6371]},
+        {nome: "Auto Eletrica Novo Tempo", tipo: "ELETRICA", coords: [-27.4209, -48.6235]},
+        {nome: "Mecânica Beto", tipo: "MECANICA", coords: [-27.4234, -48.6253]},
+        {nome: "Auto Socorro Marcinei - Caminhões", tipo: "MECANICA", coords: [-27.2257, -48.6141]},
+        {nome: "OFICINA MECÂNICA CAMINHÃO JR REPAROS", tipo: "MECANICA", coords: [-27.2591, -48.7071]},
+        {nome: "Mecânica Silva de Caminhão", tipo: "MECANICA", coords: [-27.2554, -48.7259]},
+        {nome: "Rio Vale Diesel", tipo: "MECANICA", coords: [-27.2661, -48.7951]}
+      ],
+      "Duque de Caxias": [
+        {nome: "Oficina Mecânica Lindra Nadir", tipo: "MECANICA", coords: [-22.6691, -43.2964]},
+        {nome: "Mecanica diesel Marcelo", tipo: "MECANICA", coords: [-22.6634, -43.3111]},
+        {nome: "VN AUTOMECÂNICA A DIESEL", tipo: "MECANICA", coords: [-22.6665, -43.2911]},
+        {nome: "Oficina Trucks Control em Duque de Caxias", tipo: "MECANICA", coords: [-22.6641, -43.2718]},
+        {nome: "Jorge Guedes", tipo: "MECANICA", coords: [-22.6484, -43.2574]},
+        {nome: "Dézio Auto Mecânica Diesel", tipo: "MECANICA", coords: [-22.6643, -43.2655]},
+        {nome: "M.S TRUCK", tipo: "MECANICA", coords: [-22.6726, -43.2932]},
+        {nome: "Global Manutenção Veicular", tipo: "MECANICA", coords: [-22.6861, -43.2925]},
+        {nome: "J L S Mecanica Diesel", tipo: "MECANICA", coords: [-22.6981, -43.2706]},
+        {nome: "S.O.S DIESEL 24 HORAS", tipo: "MECANICA", coords: [-22.6375, -43.2999]},
+        {nome: "BRG Mecanica Diesel", tipo: "MECANICA", coords: [-22.6362, -43.2678]},
+        {nome: "Borracharia Movel | Socorro 24h WJF", tipo: "BORRACHARIA", coords: [-22.7529, -43.2734]},
+        {nome: "Borracheiro de São José", tipo: "BORRACHARIA", coords: [-22.8892, -43.2204]},
+        {nome: "Eletroforce Elétrica Diesel", tipo: "ELETRICA", coords: [-22.6685, -43.2749]},
+        {nome: "Valdir Truck AUTO ELETRICA E ACESSORIOS LTDA", tipo: "ELETRICA", coords: [-22.6704, -43.2742]},
+        {nome: "Dex Reboque", tipo: "GUINCHO", coords: [-22.6060, -43.1800]}
+      ],
+      "Chapecó": [
+        {nome: "RODE BEM MECÂNICA - SÓ IVECO", tipo: "MECANICA", coords: [-27.0713, -52.6294]},
+        {nome: "Posmovil Chapecó - Oficina Mecanica para Caminhões", tipo: "MECANICA", coords: [-27.0660, -52.6289]},
+        {nome: "Maxi Serviços Mecânicos Chapecó", tipo: "MECANICA", coords: [-27.0669, -52.6364]},
+        {nome: "ARALDI TRUCK CENTER", tipo: "MECANICA", coords: [-27.0671, -52.6352]},
+        {nome: "Amplexo Diesel Service Chapecó - Oficina Mecânica", tipo: "MECANICA", coords: [-27.0647, -52.6369]},
+        {nome: "Euro Truck Injeção Eletrônica Diesel", tipo: "ELETRICA", coords: [-27.0634, -52.6381]}
+      ],
+      "Rolândia": [
+        {nome: "Oficina Mecânica Balan", tipo: "MECANICA", coords: [-23.3025, -51.3543]},
+        {nome: "Star Diesel Com e Retífica Motores", tipo: "MECANICA", coords: [-23.3034, -51.3586]},
+        {nome: "JotaTratores", tipo: "MECANICA", coords: [-23.3112, -51.3709]},
+        {nome: "Auto Elétrica Rolândia", tipo: "ELETRICA", coords: [-23.3115, -51.3729]},
+        {nome: "JM Auto Socorro - Guincho Rolândia", tipo: "GUINCHO", coords: [-23.2966, -51.3555]},
+        {nome: "Guincho Rolândia", tipo: "GUINCHO", coords: [-23.3121, -51.3665]},
+        {nome: "Auto Socorro Perucci - Serviços de Reboque/Guincho", tipo: "GUINCHO", coords: [-23.3169, -51.3649]}
+      ],
+      "São José dos Pinhais": [
+        {nome: "M&M TRUCK CENTER ALINHAMENTO A LASER E MOLAS", tipo: "MECANICA", coords: [-25.5620, -49.1716]},
+        {nome: "Barão Truck Center", tipo: "AUTOPEÇA", coords: [-25.5800, -49.1780]},
+        {nome: "JCA Mecânica Diesel", tipo: "MECANICA", coords: [-25.5461, -49.1856]},
+        {nome: "OFICINA MECÂNICA CAJA DIESEL", tipo: "MECANICA", coords: [-25.5674, -49.1939]},
+        {nome: "TDS Peças e Serviços", tipo: "AUTOPEÇA", coords: [-25.4725, -49.3488]},
+        {nome: "Alvenek Auto Elétrica", tipo: "ELETRICA", coords: [-25.4361, -49.3680]},
+        {nome: "Auto Elétrica Rodotruck", tipo: "ELETRICA", coords: [-25.5262, -49.3142]},
+        {nome: "Auto Elétrica Diesel Gallo", tipo: "ELETRICA", coords: [-25.4485, -49.1280]},
+        {nome: "Jota Auto Eletrica", tipo: "ELETRICA", coords: [-25.6069, -49.1706]},
+        {nome: "STAICHOK LOCAÇÃO DE CAMINHÃO MUNCK", tipo: "GUINCHO", coords: [-25.3985, -49.1898]},
+        {nome: "SOS Merces (Auto Socorro Merces) Guincho em Curitiba", tipo: "GUINCHO", coords: [-25.4033, -49.2909]},
+        {nome: "Guincho Thiago Berdusco", tipo: "GUINCHO", coords: [-25.5409, -49.2827]},
+        {nome: "Guincho Pesado São José Dos Pinhais 24 Horas", tipo: "GUINCHO", coords: [-25.5736, -49.1537]}
+      ],
+      "Osasco": [
+        {nome: "Garage Truck Center", tipo: "AUTOPEÇA", coords: [-23.5077, -46.7620]},
+        {nome: "Recuperadora Garage Truck Center", tipo: "AUTOPEÇA", coords: [-23.5160, -46.7650]},
+        {nome: "Truck Center MN Pneus", tipo: "BORRACHARIA", coords: [-23.5261, -46.7533]},
+        {nome: "Nel Auto Mecânica Diesel", tipo: "MECANICA", coords: [-23.5052, -46.7027]},
+        {nome: "Auto Elétrico Eguchi", tipo: "ELETRICA", coords: [-23.5184, -46.7911]},
+        {nome: "Fk auto elétrica", tipo: "ELETRICA", coords: [-23.4839, -46.7763]},
+        {nome: "Auto Elétrico e Mecânica RG", tipo: "ELETRICA", coords: [-23.5450, -46.8386]},
+        {nome: "Gonçalves Guincho Pesado", tipo: "GUINCHO", coords: [-23.5107, -46.8050]},
+        {nome: "Delta Guinchos 24 Horas", tipo: "GUINCHO", coords: [-23.5667, -46.8148]}
+      ],
+      "Canoas": [
+        {nome: "Makro Diesel", tipo: "MECANICA", coords: [-29.8844, -51.1851]},
+        {nome: "Master Diesel Serviços Mecânicos", tipo: "MECANICA", coords: [-29.8853, -51.1773]},
+        {nome: "Mecânica Diesel Vabis", tipo: "MECANICA", coords: [-29.8982, -51.1908]},
+        {nome: "Dorini Mecânica Diesel", tipo: "MECANICA", coords: [-29.9450, -51.1736]},
+        {nome: "Sobrinho's Mecânica Diesel", tipo: "MECANICA", coords: [-29.9167, -51.1366]},
+        {nome: "Eletrisol Comércio de Peças e Serviços Ltda", tipo: "AUTOPEÇA", coords: [-29.8607, -51.1747]},
+        {nome: "Auto Elétrica Megatruck", tipo: "ELETRICA", coords: [-29.9102, -51.1970]},
+        {nome: "Brocca Auto Peças e Auto Eletrica", tipo: "AUTOPEÇA", coords: [-29.8945, -51.1705]},
+        {nome: "Jeg Guinchos", tipo: "GUINCHO", coords: [-29.8837, -51.1925]},
+        {nome: "FC GUINCHO", tipo: "GUINCHO", coords: [-29.9122, -51.1990]}
+      ],
+      "São Vicente": [
+        {nome: "centro auto motivo MDC", tipo: "AUTOPEÇA", coords: [-23.9767, -46.4787]},
+        {nome: "H&L Oficina Mecânica", tipo: "MECANICA", coords: [-23.9780, -46.4746]},
+        {nome: "L&H Implementos Rodoviários", tipo: "GUINCHO", coords: [-23.9894, -46.4799]},
+        {nome: "Oficina Zé do Guincho", tipo: "GUINCHO", coords: [-23.9910, -46.4933]}
+      ]
+    };
+
+    const tipoCores = {
+      "ELETRICA": "#e74c3c", "MECANICA": "#3498db", "TACOGRAFO": "#9b59b6",
+      "LAVAÇÃO": "#1abc9c", "AUTOPEÇA": "#f39c12", "BORRACHARIA": "#e67e22", "GUINCHO": "#2ecc71"
+    };
+
+    const tbodyUn = document.querySelector('#unidadesTable tbody');
+    unidades.forEach(u => {
+      const row = tbodyUn.insertRow();
+      row.innerHTML = `<td><strong>${u.nome}</strong><br><small>${u.cidade || ''}</small></td>`;
+      row.onclick = () => {
+        clearMarkers();
+        map.flyTo(u.coords, 12);
+        const icon = u.grande ? grandeIcon : L.icon({iconUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon.png', iconSize: [22,32]});
+        const m = L.marker(u.coords, {icon}).addTo(map).bindPopup(`<b>${u.nome}</b>`);
+        currentMarkers.push(m);
+        if (oficinasPorUnidade[u.nome]) addOficinas(oficinasPorUnidade[u.nome]);
+      };
+    });
+
+    const todasOficinas = Object.values(oficinasPorUnidade).flat().sort((a, b) => a.nome.localeCompare(b.nome));
+
+    const tbodyOf = document.querySelector('#oficinasTable tbody');
+    todasOficinas.forEach(p => {
+      const row = tbodyOf.insertRow();
+      row.innerHTML = `<td><strong>${p.nome}</strong><br><small>${p.tipo}</small></td>`;
+      row.onclick = () => {
+        clearMarkers();
+        map.flyTo(p.coords, 14);
+        const cor = tipoCores[p.tipo] || "#555";
+        const m = L.circleMarker(p.coords, { radius: 8, color: cor, fillColor: cor, fillOpacity: 0.9, weight: 2 })
+          .addTo(map).bindPopup(`<b>${p.nome}</b><br>Tipo: ${p.tipo}`);
+        currentMarkers.push(m);
+      };
+    });
+
+    const legendDiv = document.getElementById('legend');
+    Object.keys(tipoCores).forEach(tipo => {
+      const item = document.createElement('div');
+      item.className = 'legend-item';
+      item.innerHTML = `<div class="legend-color" style="background:${tipoCores[tipo]}"></div> <span>${tipo}</span>`;
+      legendDiv.appendChild(item);
+    });
+
+    function clearMarkers() {
+      currentMarkers.forEach(m => map.removeLayer(m));
+      currentMarkers = [];
+    }
+
+    function addOficinas(lista) {
+      lista.forEach(p => {
+        const cor = tipoCores[p.tipo] || "#555";
+        const m = L.circleMarker(p.coords, { radius: 8, color: cor, fillColor: cor, fillOpacity: 0.85, weight: 2 })
+          .addTo(map).bindPopup(`<b>${p.nome}</b><br>Tipo: ${p.tipo}`);
+        currentMarkers.push(m);
+      });
+    }
+
+    function toggleFullscreen() {
+      const el = document.documentElement;
+      if (!document.fullscreenElement) {
+        el.requestFullscreen?.();
+      } else {
+        document.exitFullscreen?.();
+      }
+    }
+  </script>
+</body>
+</html>
