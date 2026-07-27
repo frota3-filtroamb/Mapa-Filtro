@@ -2,8 +2,8 @@
 <html lang="pt-BR">
 <head>
   <meta charset="UTF-8">
-  <meta charset="UTF-8">
-  <title>Filtroamb </title>
+  <title>Filtroamb</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
   <style>
     * { box-sizing: border-box; }
@@ -87,6 +87,21 @@
       font-size: 14px;
       box-shadow: 0 2px 6px rgba(0,0,0,0.15);
     }
+    #statusFrota {
+      position: absolute;
+      bottom: 18px;
+      left: 12px;
+      z-index: 1000;
+      background: rgba(13, 92, 46, 0.92);
+      color: #fff;
+      border-radius: 20px;
+      padding: 8px 14px;
+      font-size: 0.78rem;
+      font-weight: 600;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+      backdrop-filter: blur(4px);
+      letter-spacing: 0.2px;
+    }
     .map-legend {
       position: absolute;
       top: 58px;
@@ -165,6 +180,162 @@
     .leaflet-popup-content {
       margin: 12px;
     }
+
+    #buscarPlaca{
+    width:100%;
+    padding:12px;
+    border-radius:8px;
+    border:1px solid #cfcfcf;
+    font-size:15px;
+    outline:none;
+    transition:.2s;
+}
+
+#buscarPlaca:focus{
+    border-color:#0d5c2e;
+    box-shadow:0 0 6px rgba(13,92,46,.25);
+}
+
+.btn-kml{
+    width:100%;
+    margin-top:10px;
+    padding:11px 12px;
+    border-radius:8px;
+    border:1px solid #0d5c2e;
+    background:#0d5c2e;
+    color:#fff;
+    font-size:14px;
+    font-weight:600;
+    cursor:pointer;
+    transition:.2s;
+}
+.btn-kml:hover{
+    background:#0a4a24;
+}
+
+/* ===========================
+   PAINEL DO CAMINHÃO
+=========================== */
+
+#painelCaminhao{
+
+    position:absolute;
+
+    top:0;
+    right:-360px;
+
+    width:340px;
+    height:100%;
+
+    background:#fff;
+
+    z-index:1200;
+
+    box-shadow:-5px 0 20px rgba(0,0,0,.18);
+
+    transition:.35s;
+
+    overflow-y:auto;
+
+}
+
+#painelCaminhao.ativo{
+
+    right:0;
+
+}
+
+#painelHeader{
+
+    background:#0d5c2e;
+    color:#fff;
+
+    padding:18px;
+
+    font-size:22px;
+
+    font-weight:bold;
+
+}
+
+#fecharPainel{
+
+    float:right;
+
+    cursor:pointer;
+
+    font-size:22px;
+
+}
+
+.cardInfo{
+
+    padding:18px;
+
+    border-bottom:1px solid #ececec;
+
+}
+
+.cardTitulo{
+
+    color:#777;
+
+    font-size:13px;
+
+}
+
+.cardValor{
+
+    margin-top:5px;
+
+    font-size:18px;
+
+    font-weight:bold;
+
+}
+
+.oficinaItem{
+
+    padding:12px;
+
+    margin-top:10px;
+
+    border-radius:8px;
+
+    background:#f7f7f7;
+
+    border-left:5px solid #0d5c2e;
+
+    cursor:pointer;
+
+    transition:.2s;
+
+}
+
+.oficinaItem:hover{
+
+    background:#eaf6ee;
+
+}
+
+.oficinaNome{
+
+    font-weight:bold;
+
+    font-size:15px;
+
+}
+
+.oficinaDistancia{
+
+    color:#666;
+
+    margin-top:4px;
+
+    font-size:13px;
+
+}
+
   </style>
 </head>
 <body>
@@ -173,6 +344,19 @@
       <h1>Filtroamb-Unidades</h1>
       <p>Soluções Ambientais</p>
     </div>
+
+    <div class="section">
+
+<input
+    type="text"
+    id="buscarPlaca"
+    placeholder="🔍 Pesquisar placa..."
+    onkeydown="if(event.key === 'Enter') pesquisarPlaca()">
+  <button type="button" id="btnImportarKml" class="btn-kml" onclick="document.getElementById('inputKml').click()">
+    📂 Importar KML Sascar
+  </button>
+  <input type="file" id="inputKml" accept=".kml,.kmz,application/vnd.google-earth.kml+xml" style="display:none" onchange="onKmlFileSelected(event)">
+</div>
 
     <div class="section">
       <details open>
@@ -196,18 +380,299 @@
       <div id="legend"></div>
     </div>
     <div id="map"></div>
+    <div id="statusFrota">● Carregando frota...</div>
+    <div id="painelCaminhao">
+
+    <div id="painelHeader">
+
+        🚚 Caminhão
+
+        <span id="fecharPainel">✖</span>
+
+    </div>
+
+    <div class="cardInfo">
+
+        <div class="cardTitulo">Placa</div>
+
+        <div class="cardValor" id="infoPlaca">-</div>
+
+    </div>
+
+    <div class="cardInfo">
+
+        <div class="cardTitulo">Cidade</div>
+
+        <div class="cardValor" id="infoCidade">-</div>
+
+    </div>
+
+    <div class="cardInfo">
+
+        <div class="cardTitulo">Ignição</div>
+
+        <div class="cardValor" id="infoIgnicao">-</div>
+
+    </div>
+
+    <div class="cardInfo">
+
+        <div class="cardTitulo">Velocidade</div>
+
+        <div class="cardValor" id="infoVelocidade">-</div>
+
+    </div>
+<div class="cardInfo">
+
+    <div class="cardTitulo">
+        🔧 Oficinas próximas
+    </div>
+
+    <div id="listaOficinas"></div>
+
+</div>
   </div>
 
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
   <script>
     const map = L.map('map').setView([-26, -50], 6.5);
 
+setTimeout(() => {
+    map.invalidateSize();
+}, 300);
+
     L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
       attribution: '© OpenStreetMap | Filtroamb'
     }).addTo(map);
 
-    let currentMarkers = [];
 
+
+
+setTimeout(() => {
+    map.invalidateSize();
+}, 500);
+
+
+
+
+
+// ===============================
+// FROTA SASCAR VIA KML
+// ===============================
+// Como usar:
+// 1) No portal Sascar, exporte Google Earth (KML)
+// 2) Clique em "Importar KML Sascar" e selecione o arquivo
+// 3) Ou coloque location.kml na mesma pasta do HTML e abra via servidor local
+
+let marcadoresCaminhoes = [];
+let caminhoes = [];
+let placaSelecionada = null;
+let circuloCaminhao = null;
+let currentMarkers = [];
+
+const iconeCaminhao = L.icon({
+  iconUrl: "https://cdn-icons-png.flaticon.com/512/744/744465.png",
+  iconSize: [32, 32],
+  iconAnchor: [16, 16]
+});
+
+function decodeHtml(html) {
+  const txt = document.createElement('textarea');
+  txt.innerHTML = html;
+  return txt.value;
+}
+
+function extrairCampo(descHtml, nome) {
+  const d = decodeHtml(descHtml);
+  const re = new RegExp('<b>' + nome + ':<\\/b><\\/td>\\s*<td>(.*?)<\\/td>', 'i');
+  const m = d.match(re);
+  return m ? m[1].trim() : '';
+}
+
+function parseVelocidade(txt) {
+  const m = String(txt).match(/([\d.,]+)/);
+  return m ? parseFloat(m[1].replace(',', '.')) : 0;
+}
+
+/** Lê o KML exportado pela Sascar e devolve lista de caminhões */
+function parseKmlSascar(kmlText) {
+  const parser = new DOMParser();
+  const xml = parser.parseFromString(kmlText, 'text/xml');
+  const placemarks = xml.getElementsByTagName('Placemark');
+  const lista = [];
+
+  for (let i = 0; i < placemarks.length; i++) {
+    const pm = placemarks[i];
+    const descNode = pm.getElementsByTagName('description')[0];
+    const coordNode = pm.getElementsByTagName('coordinates')[0];
+    if (!descNode || !coordNode) continue;
+
+    const desc = descNode.textContent || '';
+    const coordTxt = (coordNode.textContent || '').trim();
+    const parts = coordTxt.split(',');
+    if (parts.length < 2) continue;
+
+    const lng = parseFloat(parts[0]);
+    const lat = parseFloat(parts[1]);
+    if (isNaN(lat) || isNaN(lng)) continue;
+
+    const placa = extrairCampo(desc, 'Placa');
+    if (!placa) continue;
+
+    const municipio = extrairCampo(desc, 'Município') || extrairCampo(desc, 'Municipio');
+    const estado = extrairCampo(desc, 'Estado');
+    const rua = extrairCampo(desc, 'Rua');
+    const ignTxt = extrairCampo(desc, 'Ignição') || extrairCampo(desc, 'Ignicao');
+    const velTxt = extrairCampo(desc, 'Velocidade');
+    const data = extrairCampo(desc, 'Data');
+    const motorista = extrairCampo(desc, 'Motorista');
+    const bateria = extrairCampo(desc, 'Bateria (V)') || extrairCampo(desc, 'Bateria');
+
+    lista.push({
+      placa: placa.toUpperCase(),
+      cidade: [municipio, estado].filter(Boolean).join(' - ') || '—',
+      rua: rua || '',
+      lat,
+      lng,
+      ignicao: /ligada/i.test(ignTxt),
+      velocidade: parseVelocidade(velTxt),
+      data: data || '',
+      motorista: motorista || '',
+      bateria: bateria || ''
+    });
+  }
+
+  return lista;
+}
+
+function popupCaminhao(c) {
+  return `
+    <b>🚚 ${c.placa}</b><br>
+    📍 ${c.cidade}${c.rua ? '<br>🛣 ' + c.rua : ''}<br>
+    ⚡ Ignição: ${c.ignicao ? 'Ligada' : 'Desligada'}<br>
+    🏎️ Velocidade: ${c.velocidade} km/h
+    ${c.data ? '<br>🕒 ' + c.data : ''}
+  `;
+}
+
+function atualizarPainelSeAberto(c) {
+  if (!placaSelecionada || placaSelecionada !== c.placa) return;
+  document.getElementById("infoPlaca").innerText = c.placa;
+  document.getElementById("infoCidade").innerText = c.cidade;
+  document.getElementById("infoIgnicao").innerText =
+    c.ignicao ? "🟢 Ligada" : "🔴 Desligada";
+  document.getElementById("infoVelocidade").innerText = c.velocidade + " km/h";
+}
+
+function limparMarcadoresCaminhoes() {
+  marcadoresCaminhoes.forEach(item => {
+    map.removeLayer(item.marker);
+  });
+  marcadoresCaminhoes = [];
+}
+
+function sincronizarMarcadores(lista) {
+  caminhoes = lista;
+  limparMarcadoresCaminhoes();
+
+  lista.forEach(c => {
+    const marker = L.marker([c.lat, c.lng], { icon: iconeCaminhao }).addTo(map);
+    marker.bindPopup(popupCaminhao(c));
+    marker.on('click', () => abrirPainelCaminhao(c.placa));
+    marcadoresCaminhoes.push({ placa: c.placa, marker });
+    atualizarPainelSeAberto(c);
+  });
+
+  // se painel aberto, reposiciona círculo
+  if (placaSelecionada) {
+    const dados = caminhoes.find(c => c.placa === placaSelecionada);
+    if (dados && circuloCaminhao) {
+      circuloCaminhao.setLatLng([dados.lat, dados.lng]);
+    }
+  }
+
+  const badge = document.getElementById('statusFrota');
+  if (badge) {
+    const agora = new Date().toLocaleTimeString('pt-BR');
+    badge.textContent = `● Sascar KML · ${lista.length} veículos · ${agora}`;
+  }
+}
+
+function carregarFrotaDoKml(kmlText) {
+  try {
+    const lista = parseKmlSascar(kmlText);
+    if (!lista.length) {
+      alert('Nenhum veículo encontrado neste KML.');
+      return;
+    }
+    sincronizarMarcadores(lista);
+  } catch (e) {
+    console.error(e);
+    alert('Erro ao ler o arquivo KML. Verifique se é o export Google Earth da Sascar.');
+  }
+}
+
+function onKmlFileSelected(event) {
+  const file = event.target.files && event.target.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = () => carregarFrotaDoKml(String(reader.result || ''));
+  reader.readAsText(file);
+}
+
+/** Tenta carregar location.kml da mesma pasta (só funciona em servidor local/http) */
+async function tentarCarregarKmlLocal() {
+  try {
+    const res = await fetch('location.kml', { cache: 'no-store' });
+    if (!res.ok) return;
+    const text = await res.text();
+    if (text.includes('<Placemark>')) {
+      carregarFrotaDoKml(text);
+    }
+  } catch (e) {
+    // arquivo local sem servidor: normal — use o botão Importar
+  }
+}
+
+function abrirPainelCaminhao(placa) {
+  const dados = caminhoes.find(c => c.placa.toUpperCase() === placa.toUpperCase());
+  if (!dados) return;
+
+  placaSelecionada = dados.placa.toUpperCase();
+
+  if (circuloCaminhao) map.removeLayer(circuloCaminhao);
+
+  const posicao = { lat: dados.lat, lng: dados.lng };
+
+  circuloCaminhao = L.circle([dados.lat, dados.lng], {
+    radius: 5000,
+    color: "#0d5c2e",
+    fillColor: "#0d5c2e",
+    fillOpacity: 0.15,
+    weight: 3
+  }).addTo(map);
+
+  map.flyToBounds(circuloCaminhao.getBounds(), { padding: [40, 40], duration: 1.2 });
+
+  const item = marcadoresCaminhoes.find(m => m.placa === placaSelecionada);
+  if (item) item.marker.openPopup();
+
+  painel.classList.add("ativo");
+  document.getElementById("infoPlaca").innerText = dados.placa;
+  document.getElementById("infoCidade").innerText = dados.cidade;
+  document.getElementById("infoIgnicao").innerText =
+    dados.ignicao ? "🟢 Ligada" : "🔴 Desligada";
+  document.getElementById("infoVelocidade").innerText = dados.velocidade + " km/h";
+
+  clearMarkers();
+  addOficinas(Object.values(oficinasPorUnidade).flat(), posicao);
+  mostrarOficinasProximas(dados.lat, dados.lng);
+}
+
+// tenta KML na mesma pasta; senão o usuário importa pelo botão
+tentarCarregarKmlLocal();
+
+let marcadoresOficinas = [];
     const grandeIcon = L.icon({
       iconUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon.png',
       shadowUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png',
@@ -244,15 +709,15 @@
 
     const oficinasPorUnidade = {
       "Matriz - Araquari": [
-        {nome: "Tec.Sat Sistemas", tipo: "ELETRICA", coords: [-26.4156, -48.7852], endereco: "Araquari - SC"},
-        {nome: "Mecânica D.A. Diesel", tipo: "MECANICA", coords: [-26.4174, -48.7932], endereco: "Araquari - SC"},
-        {nome: "Truck Diag Elétrica Diesel", tipo: "ELETRICA", coords: [-26.4165, -48.7773], endereco: "Araquari - SC"},
-        {nome: "Mecânica João Grandão", tipo: "MECANICA", coords: [-26.4153, -48.7712], endereco: "Araquari - SC"},
-        {nome: "Mecânica Dela Diesel - Araquari", tipo: "MECANICA", coords: [-26.4422, -48.8101], endereco: "Araquari - SC"},
+        {nome: "Tec.Sat Sistemas", tipo: "ELETRICA", coords: [-26.416035565097832, -48.78553246275945], endereco: "Araquari - SC"},
+        {nome: "Mecânica D.A. Diesel", tipo: "MECANICA", coords: [-26.41780889943634, -48.79353921857906], endereco: "Araquari - SC"},
+        {nome: "Truck Diag Elétrica Diesel", tipo: "ELETRICA", coords: [-26.417252966415496, -48.77739523392317], endereco: "Araquari - SC"},
+        {nome: "Mecânica João Grandão", tipo: "MECANICA", coords: [-26.416667671825575, -48.77113530508729], endereco: "Araquari - SC"},
+        {nome: "Mecânica Dela Diesel - Araquari", tipo: "MECANICA", coords: [-26.442769219535425, -48.81002761857797], endereco: "Araquari - SC"},
         {nome: "Dicave | Volvo Caminhões - Joinville", tipo: "MECANICA", coords: [-26.4366, -48.8115], endereco: "Joinville - SC"},
-        {nome: "Air Truck", tipo: "MECANICA", coords: [-26.4353, -48.8104], endereco: "Joinville - SC"},
-        {nome: "Lorenzi Tacógrafos", tipo: "TACOGRAFO", coords: [-26.4344, -48.8117], endereco: "Joinville - SC"},
-        {nome: "Eixo Sul Lavação", tipo: "LAVAÇÃO", coords: [-26.4347, -48.8127], endereco: "Joinville - SC"},
+        {nome: "Air Truck", tipo: "MECANICA", coords: [-26.435490196093742, -48.81031729796299], endereco: "Joinville - SC"},
+        {nome: "Lorenzi Tacógrafos", tipo: "TACOGRAFO", coords: [-26.43426332114971, -48.81194080323427], endereco: "Joinville - SC"},
+        {nome: "Eixo Sul Lavação", tipo: "LAVAÇÃO", coords: [-26.434869271433104, -48.81272194741432], endereco: "Joinville - SC"},
         {nome: "Diferenciais Guaramirim", tipo: "MECANICA", coords: [-26.4346, -48.8115], endereco: "Joinville - SC"},
         {nome: "Assis Caminhões", tipo: "MECANICA", coords: [-26.4341, -48.8156], endereco: "Joinville - SC"},
         {nome: "Escapamentos Catarina Auto Center", tipo: "AUTOPEÇA", coords: [-26.2809, -48.8494], endereco: "Joinville - SC"},
@@ -370,7 +835,7 @@
         {nome: "JCA Mecânica Diesel", tipo: "MECANICA", coords: [-25.5461, -49.1856], endereco: "São José dos Pinhais - PR"},
         {nome: "OFICINA MECÂNICA CAJA DIESEL", tipo: "MECANICA", coords: [-25.5674, -49.1939], endereco: "São José dos Pinhais - PR"},
         {nome: "TDS Peças e Serviços", tipo: "AUTOPEÇA", coords: [-25.4725, -49.3488], endereco: "São José dos Pinhais - PR"},
-        {nome: "Alvenek Auto Elétrica", tipo: "ELETRICA", coords: [-25.4361, -49.3680], endereco: "São José dos Pinhais - PR"},
+        {nome: "Alvenek Auto Elétrica", tipo: "ELETRICA", coords: [-25.440178200426406, -49.36857834881595], endereco: "São José dos Pinhais - PR"},
         {nome: "Auto Elétrica Rodotruck", tipo: "ELETRICA", coords: [-25.5262, -49.3142], endereco: "São José dos Pinhais - PR"},
         {nome: "Auto Elétrica Diesel Gallo", tipo: "ELETRICA", coords: [-25.4485, -49.1280], endereco: "São José dos Pinhais - PR"},
         {nome: "Jota Auto Eletrica", tipo: "ELETRICA", coords: [-25.6069, -49.1706], endereco: "São José dos Pinhais - PR"},
@@ -428,8 +893,8 @@
       "AUTOPEÇA": "Autopeça",
       "BORRACHARIA": "Borracharia",
       "GUINCHO": "Guincho"
-    };
-
+    }; 
+    
     const tbodyUn = document.querySelector('#unidadesTable tbody');
     unidades.forEach(u => {
       const row = tbodyUn.insertRow();
@@ -491,15 +956,197 @@
       currentMarkers = [];
     }
 
-    function addOficinas(lista) {
-      lista.forEach(p => {
+function addOficinas(lista, posicao) {
+
+    marcadoresOficinas = [];
+
+    lista.forEach(p => {
+
         const cor = tipoCores[p.tipo] || "#555";
+
+        let distancia = Infinity;
+
+        if (posicao) {
+            distancia = calcularDistancia(
+                posicao.lat,
+                posicao.lng,
+                p.coords[0],
+                p.coords[1]
+            );
+        }
+
+        const oficinaMaisProxima = posicao
+            ? encontrarOficinaMaisProxima(posicao.lat, posicao.lng).oficina
+            : null;
+
+        const ehMaisProxima =
+            oficinaMaisProxima &&
+            oficinaMaisProxima.nome === p.nome;
+
+
         const m = L.circleMarker(p.coords, {
-          radius: 8, color: cor, fillColor: cor, fillOpacity: 0.85, weight: 2
-        }).addTo(map).bindPopup(popupHtml(p));
+            radius: ehMaisProxima ? 10 : 7,
+            color: cor,
+            fillColor: cor,
+            fillOpacity: 0.9,
+            weight: ehMaisProxima ? 3 : 2
+        })
+        .addTo(map)
+        .bindPopup(popupHtml(p));
+
         currentMarkers.push(m);
-      });
+
+        marcadoresOficinas.push({
+            marker: m,
+            dados: p
+        });
+
+    });
+
+}
+
+function calcularDistancia(lat1, lon1, lat2, lon2) {
+
+    const R = 6371; // km
+
+    const dLat = (lat2 - lat1) * Math.PI / 180;
+    const dLon = (lon2 - lon1) * Math.PI / 180;
+
+    const a =
+        Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+        Math.cos(lat1 * Math.PI / 180) *
+        Math.cos(lat2 * Math.PI / 180) *
+        Math.sin(dLon / 2) *
+        Math.sin(dLon / 2);
+
+    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+
+    return R * c;
+
+}
+
+function encontrarOficinaMaisProxima(lat, lng){
+
+    let oficinaMaisProxima = null;
+    let menorDistancia = Infinity;
+
+    Object.values(oficinasPorUnidade).flat().forEach(oficina => {
+
+        const distancia = calcularDistancia(
+            lat,
+            lng,
+            oficina.coords[0],
+            oficina.coords[1]
+        );
+
+        if(distancia < menorDistancia){
+
+            menorDistancia = distancia;
+            oficinaMaisProxima = oficina;
+
+        }
+
+    });
+
+    return {
+        oficina: oficinaMaisProxima,
+        distancia: menorDistancia
+    };
+
+}
+
+function mostrarOficinasProximas(lat, lng){
+
+    const lista = [];
+
+    Object.values(oficinasPorUnidade).flat().forEach(oficina=>{
+
+        const distancia = calcularDistancia(
+            lat,
+            lng,
+            oficina.coords[0],
+            oficina.coords[1]
+        );
+
+        lista.push({
+            ...oficina,
+            distancia
+        });
+
+    });
+
+    lista.sort((a,b)=>a.distancia-b.distancia);
+
+    const div = document.getElementById("listaOficinas");
+
+    div.innerHTML="";
+
+    lista.slice(0,5).forEach((oficina,index)=>{
+
+        div.innerHTML += `
+        <div class="oficinaItem"
+             onclick="irParaOficina(${oficina.coords[0]},${oficina.coords[1]})">
+
+            <div class="oficinaNome">
+
+                ${index+1}º • ${oficina.nome}
+
+            </div>
+
+            <div class="oficinaDistancia">
+
+                ${oficina.tipo}<br>
+                📍 ${oficina.distancia.toFixed(1)} km
+
+            </div>
+
+        </div>
+        `;
+
+    });
+
+}
+
+function irParaOficina(lat,lng){
+
+    map.flyTo([lat,lng],15,{
+        duration:1.5
+    });
+
+}
+
+const painel = document.getElementById("painelCaminhao");
+const btnFechar = document.getElementById("fecharPainel");
+
+btnFechar.onclick = () => {
+    painel.classList.remove("ativo");
+    placaSelecionada = null;
+    if (circuloCaminhao) {
+        map.removeLayer(circuloCaminhao);
+        circuloCaminhao = null;
     }
+};
+
+
+function pesquisarPlaca(){
+    const placa = document
+        .getElementById("buscarPlaca")
+        .value
+        .trim()
+        .toUpperCase();
+
+    if (placa == "") return;
+
+    const caminhao = marcadoresCaminhoes.find(c => c.placa.includes(placa));
+
+    if (!caminhao) {
+        alert("Caminhão não encontrado: " + placa);
+        return;
+    }
+
+    abrirPainelCaminhao(caminhao.placa);
+}
+
 
     function toggleFullscreen() {
       const el = document.documentElement;
