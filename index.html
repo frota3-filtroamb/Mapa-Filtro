@@ -104,7 +104,7 @@
     }
     .map-legend {
       position: absolute;
-      top: 58px;
+      top: 75px;
       left: 12px;
       z-index: 1000;
       background: rgba(255,255,255,0.96);
@@ -129,6 +129,21 @@
       margin-bottom: 4px;
       color: #333;
       white-space: nowrap;
+      cursor: pointer;
+      padding: 4px 6px;
+      border-radius: 6px;
+      transition: background 0.15s, opacity 0.15s;
+      user-select: none;
+    }
+    .map-legend-item:hover {
+      background: #f0f4f0;
+    }
+    .map-legend-item.inativo {
+      opacity: 0.35;
+    }
+    .map-legend-item.ativo-filtro {
+      background: #e8f5e9;
+      font-weight: 600;
     }
     .map-legend-color {
       width: 10px;
@@ -136,6 +151,18 @@
       border-radius: 50%;
       border: 1px solid rgba(0,0,0,0.2);
       flex-shrink: 0;
+    }
+    .map-legend-todos {
+      margin-top: 6px;
+      padding-top: 6px;
+      border-top: 1px solid #e5e5e5;
+      font-size: 0.75rem;
+      color: #0d5c2e;
+      cursor: pointer;
+      font-weight: 600;
+    }
+    .map-legend-todos:hover {
+      text-decoration: underline;
     }
 
     .gm-popup {
@@ -471,9 +498,10 @@ let circuloCaminhao = null;
 let currentMarkers = [];
 
 const iconeCaminhao = L.icon({
-  iconUrl: "https://cdn-icons-png.flaticon.com/512/744/744465.png",
-  iconSize: [32, 32],
-  iconAnchor: [16, 16]
+  iconUrl: "https://cdn-icons-png.flaticon.com/512/3097/3097180.png",
+  iconSize: [42, 42],
+  iconAnchor: [21, 21],
+  popupAnchor: [0, -20]
 });
 
 function decodeHtml(html) {
@@ -921,13 +949,66 @@ let marcadoresOficinas = [];
       };
     });
 
+    // Filtro da legenda: null = mostra todos os tipos
+    let filtroTipo = null;
+
+    function aplicarFiltroOficinas() {
+      marcadoresOficinas.forEach(item => {
+        const tipo = item.dados.tipo;
+        const mostrar = !filtroTipo || tipo === filtroTipo;
+        if (mostrar) {
+          if (!map.hasLayer(item.marker)) {
+            item.marker.addTo(map);
+          }
+        } else {
+          if (map.hasLayer(item.marker)) {
+            map.removeLayer(item.marker);
+          }
+        }
+      });
+
+      // Atualiza visual da legenda
+      document.querySelectorAll('.map-legend-item[data-tipo]').forEach(el => {
+        const t = el.getAttribute('data-tipo');
+        el.classList.remove('ativo-filtro', 'inativo');
+        if (filtroTipo) {
+          if (t === filtroTipo) el.classList.add('ativo-filtro');
+          else el.classList.add('inativo');
+        }
+      });
+    }
+
+    function selecionarFiltroTipo(tipo) {
+      // Clica de novo no mesmo tipo → volta a mostrar todos
+      if (filtroTipo === tipo) {
+        filtroTipo = null;
+      } else {
+        filtroTipo = tipo;
+      }
+      aplicarFiltroOficinas();
+    }
+
+    function limparFiltroTipo() {
+      filtroTipo = null;
+      aplicarFiltroOficinas();
+    }
+
     const legendDiv = document.getElementById('legend');
     Object.keys(tipoCores).forEach(tipo => {
       const item = document.createElement('div');
       item.className = 'map-legend-item';
-      item.innerHTML = `<div class="map-legend-color" style="background:${tipoCores[tipo]}"></div><span>= ${tipoDescricao[tipo]}</span>`;
+      item.setAttribute('data-tipo', tipo);
+      item.title = 'Clique para filtrar: ' + tipoDescricao[tipo];
+      item.innerHTML = `<div class="map-legend-color" style="background:${tipoCores[tipo]}"></div><span>${tipoDescricao[tipo]}</span>`;
+      item.onclick = () => selecionarFiltroTipo(tipo);
       legendDiv.appendChild(item);
     });
+
+    const todos = document.createElement('div');
+    todos.className = 'map-legend-todos';
+    todos.textContent = '↺ Mostrar todos';
+    todos.onclick = limparFiltroTipo;
+    legendDiv.appendChild(todos);
 
     function popupHtml(p) {
       const mapLink = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(p.nome + ' ' + (p.endereco || ''))}`;
@@ -946,14 +1027,19 @@ let marcadoresOficinas = [];
       const cor = tipoCores[p.tipo] || "#555";
       const m = L.circleMarker(p.coords, {
         radius: 8, color: cor, fillColor: cor, fillOpacity: 0.9, weight: 2
-      }).addTo(map).bindPopup(popupHtml(p));
+      }).bindPopup(popupHtml(p));
+      if (!filtroTipo || p.tipo === filtroTipo) {
+        m.addTo(map);
+      }
       currentMarkers.push(m);
+      marcadoresOficinas.push({ marker: m, dados: p });
       m.openPopup();
     }
 
     function clearMarkers() {
       currentMarkers.forEach(m => map.removeLayer(m));
       currentMarkers = [];
+      marcadoresOficinas = [];
     }
 
 function addOficinas(lista, posicao) {
@@ -990,9 +1076,11 @@ function addOficinas(lista, posicao) {
             fillColor: cor,
             fillOpacity: 0.9,
             weight: ehMaisProxima ? 3 : 2
-        })
-        .addTo(map)
-        .bindPopup(popupHtml(p));
+        }).bindPopup(popupHtml(p));
+
+        if (!filtroTipo || p.tipo === filtroTipo) {
+            m.addTo(map);
+        }
 
         currentMarkers.push(m);
 
@@ -1057,52 +1145,52 @@ function encontrarOficinaMaisProxima(lat, lng){
 
 function mostrarOficinasProximas(lat, lng){
 
-    const lista = [];
-
-    Object.values(oficinasPorUnidade).flat().forEach(oficina=>{
-
+    // Monta lista com distância
+    const lista = Object.values(oficinasPorUnidade).flat().map(oficina => {
         const distancia = calcularDistancia(
             lat,
             lng,
             oficina.coords[0],
             oficina.coords[1]
         );
-
-        lista.push({
-            ...oficina,
-            distancia
-        });
-
+        return { ...oficina, distancia };
     });
 
-    lista.sort((a,b)=>a.distancia-b.distancia);
+    // Pega só a mais próxima de CADA tipo
+    const maisProximaPorTipo = {};
+    lista.forEach(oficina => {
+        const tipo = oficina.tipo;
+        if (!maisProximaPorTipo[tipo] || oficina.distancia < maisProximaPorTipo[tipo].distancia) {
+            maisProximaPorTipo[tipo] = oficina;
+        }
+    });
+
+    // Ordena os tipos pela distância (mais perto primeiro)
+    const resultado = Object.values(maisProximaPorTipo)
+        .sort((a, b) => a.distancia - b.distancia);
 
     const div = document.getElementById("listaOficinas");
+    div.innerHTML = "";
 
-    div.innerHTML="";
+    if (!resultado.length) {
+        div.innerHTML = '<div class="oficinaDistancia">Nenhuma oficina cadastrada.</div>';
+        return;
+    }
 
-    lista.slice(0,5).forEach((oficina,index)=>{
-
+    resultado.forEach((oficina) => {
+        const nomeTipo = (tipoDescricao[oficina.tipo] || oficina.tipo);
         div.innerHTML += `
         <div class="oficinaItem"
              onclick="irParaOficina(${oficina.coords[0]},${oficina.coords[1]})">
-
             <div class="oficinaNome">
-
-                ${index+1}º • ${oficina.nome}
-
+                ${nomeTipo} • ${oficina.nome}
             </div>
-
             <div class="oficinaDistancia">
-
                 ${oficina.tipo}<br>
                 📍 ${oficina.distancia.toFixed(1)} km
-
             </div>
-
         </div>
         `;
-
     });
 
 }
