@@ -104,7 +104,7 @@
     }
     .map-legend {
       position: absolute;
-      top: 75px;
+      top: 58px;
       left: 12px;
       z-index: 1000;
       background: rgba(255,255,255,0.96);
@@ -363,6 +363,53 @@
 
 }
 
+.oficinaAcoes{
+    display:flex;
+    flex-wrap:wrap;
+    gap:6px;
+    margin-top:10px;
+}
+
+.btnRota{
+    border:none;
+    border-radius:6px;
+    padding:7px 10px;
+    font-size:12px;
+    font-weight:600;
+    cursor:pointer;
+    color:#fff;
+    transition:.15s;
+}
+
+.btnRotaMaps{
+    background:#1a73e8;
+}
+.btnRotaMaps:hover{
+    background:#155fc0;
+}
+
+.btnRotaWaze{
+    background:#33ccff;
+    color:#0b3d4a;
+}
+.btnRotaWaze:hover{
+    background:#1ab8e6;
+}
+
+.btnRotaCopiar{
+    background:#0d5c2e;
+}
+.btnRotaCopiar:hover{
+    background:#0a4a24;
+}
+
+.btnRotaMapa{
+    background:#666;
+}
+.btnRotaMapa:hover{
+    background:#555;
+}
+
   </style>
 </head>
 <body>
@@ -597,6 +644,56 @@ function limparMarcadoresCaminhoes() {
     map.removeLayer(item.marker);
   });
   marcadoresCaminhoes = [];
+}
+
+async function carregarVeiculosCSV() {
+
+    const resposta = await fetch("./dados/veiculos.csv");
+    const texto = await resposta.text();
+
+    const linhas = texto.trim().split("\n");
+
+    // Remove o cabeçalho
+    linhas.shift();
+
+    const mapaVeiculos = {};
+
+    linhas.forEach(linha => {
+
+        const c = linha.split(";");
+
+        const placa = c[1];
+
+        mapaVeiculos[placa] = {
+
+            placa: placa,
+
+            lat: parseFloat(c[2]),
+
+            lng: parseFloat(c[3]),
+
+            velocidade: Number(c[4]),
+
+            ignicao: c[7] === "True",
+
+            data: c[8],
+
+            rua: c[10],
+
+            cidade: c[11],
+
+            uf: c[12]
+
+        };
+
+    });
+
+    const lista = Object.values(mapaVeiculos);
+
+    console.log(lista);
+
+    sincronizarMarcadores(lista);
+
 }
 
 function sincronizarMarcadores(lista) {
@@ -1177,17 +1274,32 @@ function mostrarOficinasProximas(lat, lng){
         return;
     }
 
-    resultado.forEach((oficina) => {
+    resultado.forEach((oficina, idx) => {
         const nomeTipo = (tipoDescricao[oficina.tipo] || oficina.tipo);
+        const oLat = oficina.coords[0];
+        const oLng = oficina.coords[1];
         div.innerHTML += `
-        <div class="oficinaItem"
-             onclick="irParaOficina(${oficina.coords[0]},${oficina.coords[1]})">
-            <div class="oficinaNome">
+        <div class="oficinaItem">
+            <div class="oficinaNome" onclick="irParaOficina(${oLat},${oLng})" style="cursor:pointer">
                 ${nomeTipo} • ${oficina.nome}
             </div>
             <div class="oficinaDistancia">
                 ${oficina.tipo}<br>
                 📍 ${oficina.distancia.toFixed(1)} km
+            </div>
+            <div class="oficinaAcoes">
+                <button type="button" class="btnRota btnRotaMaps"
+                    onclick="abrirRotaGoogle(${lat},${lng},${oLat},${oLng})">
+                    🗺️ Google Maps
+                </button>
+                <button type="button" class="btnRota btnRotaWaze"
+                    onclick="abrirRotaWaze(${oLat},${oLng})">
+                    📍 Waze
+                </button>
+                <button type="button" class="btnRota btnRotaCopiar"
+                    onclick="copiarLinkRota(${lat},${lng},${oLat},${oLng},'${oficina.nome.replace(/'/g, "\'")}')">
+                    📋 Copiar link
+                </button>
             </div>
         </div>
         `;
@@ -1196,11 +1308,42 @@ function mostrarOficinasProximas(lat, lng){
 }
 
 function irParaOficina(lat,lng){
-
     map.flyTo([lat,lng],15,{
         duration:1.5
     });
+}
 
+/** Rota Google Maps: caminhão → oficina (abre para enviar ao motorista) */
+function abrirRotaGoogle(origLat, origLng, destLat, destLng) {
+    const url = 'https://www.google.com/maps/dir/?api=1'
+        + '&origin=' + encodeURIComponent(origLat + ',' + origLng)
+        + '&destination=' + encodeURIComponent(destLat + ',' + destLng)
+        + '&travelmode=driving';
+    window.open(url, '_blank');
+}
+
+/** Abre navegação no Waze até a oficina */
+function abrirRotaWaze(destLat, destLng) {
+    const url = 'https://waze.com/ul?ll=' + destLat + '%2C' + destLng + '&navigate=yes';
+    window.open(url, '_blank');
+}
+
+/** Copia link do Google Maps para colar no WhatsApp do motorista */
+async function copiarLinkRota(origLat, origLng, destLat, destLng, nomeOficina) {
+    const url = 'https://www.google.com/maps/dir/?api=1'
+        + '&origin=' + encodeURIComponent(origLat + ',' + origLng)
+        + '&destination=' + encodeURIComponent(destLat + ',' + destLng)
+        + '&travelmode=driving';
+
+    const texto = 'Rota até ' + (nomeOficina || 'oficina') + ':\n' + url;
+
+    try {
+        await navigator.clipboard.writeText(texto);
+        alert('Link da rota copiado!\nCole no WhatsApp do motorista.');
+    } catch (e) {
+        // fallback
+        prompt('Copie o link abaixo e envie ao motorista:', url);
+    }
 }
 
 const painel = document.getElementById("painelCaminhao");
@@ -1241,6 +1384,27 @@ function pesquisarPlaca(){
       if (!document.fullscreenElement) el.requestFullscreen?.();
       else document.exitFullscreen?.();
     }
+
+fetch("./dados/veiculos.csv")
+    .then(response => {
+        console.log("Status:", response.status);
+        console.log("OK:", response.ok);
+        return response.text();
+    })
+    .then(texto => {
+        console.log("CSV carregado!");
+        console.log(texto);
+    })
+    .catch(err => {
+        console.error("Erro:", err);
+    });
+
+// Carrega a frota ao abrir o mapa
+carregarVeiculosCSV();
+
+// Atualiza automaticamente a cada 30 segundos
+setInterval(carregarVeiculosCSV, 30000);
+    
   </script>
 </body>
 </html>
