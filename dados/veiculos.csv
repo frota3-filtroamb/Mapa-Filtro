@@ -1,3 +1,2 @@
 id_pacote;placa;latitude;longitude;velocidade;odometro;horimetro;status_ignicao;data_posicao;data_insercao;rua;cidade;uf;ponto_referencia
-
 1;TESTE123;-26.366000;-48.845000;0;0;0;False;2026-08-19 10:00:00;2026-08-19 10:00:00;Teste;Araquari;SC;
