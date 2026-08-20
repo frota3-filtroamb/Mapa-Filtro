@@ -104,7 +104,7 @@
     }
     .map-legend {
       position: absolute;
-      top: 58px;
+      top:  75px;
       left: 12px;
       z-index: 1000;
       background: rgba(255,255,255,0.96);
@@ -648,7 +648,7 @@ function limparMarcadoresCaminhoes() {
 
 async function carregarVeiculosCSV() {
 
-    const resposta = await fetch("./dados/veiculos.csv");
+    const resposta = await fetch("https://frota3-filtroamb.github.io/Mapa-Filtro/dados/veiculos.csv");
     const texto = await resposta.text();
 
     const linhas = texto.trim().split("\n");
@@ -1385,7 +1385,7 @@ function pesquisarPlaca(){
       else document.exitFullscreen?.();
     }
 
-fetch("./dados/veiculos.csv")
+fetch("https://frota3-filtroamb.github.io/Mapa-Filtro/dados/veiculos.csv")
     .then(response => {
         console.log("Status:", response.status);
         console.log("OK:", response.ok);
@@ -1402,8 +1402,6 @@ fetch("./dados/veiculos.csv")
 // Carrega a frota ao abrir o mapa
 carregarVeiculosCSV();
 
-// Atualiza automaticamente a cada 30 segundos
-setInterval(carregarVeiculosCSV, 30000);
     
   </script>
 </body>
