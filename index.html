@@ -646,55 +646,33 @@ function limparMarcadoresCaminhoes() {
   marcadoresCaminhoes = [];
 }
 
-async function carregarVeiculosCSV() {
-
-    const resposta = await fetch("https://frota3-filtroamb.github.io/Mapa-Filtro/dados/veiculos.csv");
-    const texto = await resposta.text();
-
-    const linhas = texto.trim().split("\n");
-
-    // Remove o cabeçalho
-    linhas.shift();
-
-    const mapaVeiculos = {};
-
-    linhas.forEach(linha => {
-
-        const c = linha.split(";");
-
-        const placa = c[1];
-
-        mapaVeiculos[placa] = {
-
-            placa: placa,
-
-            lat: parseFloat(c[2]),
-
-            lng: parseFloat(c[3]),
-
-            velocidade: Number(c[4]),
-
-            ignicao: c[7] === "True",
-
-            data: c[8],
-
-            rua: c[10],
-
-            cidade: c[11],
-
-            uf: c[12]
-
-        };
-
-    });
-
-    const lista = Object.values(mapaVeiculos);
-
-    console.log(lista);
-
+async function carregarVeiculosKML() {
+  try {
+    const resposta = await fetch("https://frota3-filtroamb.github.io/Mapa-Filtro/dados/veiculos.kml");
+    if (!resposta.ok) {
+      console.error("Erro ao carregar KML:", resposta.status);
+      return;
+    }
+    const kmlText = await resposta.text();
+    const lista = parseKmlSascar(kmlText);
+    
+    if (lista.length === 0) {
+      console.warn("Nenhum veículo encontrado no KML");
+      return;
+    }
+    
     sincronizarMarcadores(lista);
-
+    
+    const badge = document.getElementById('statusFrota');
+    if (badge) {
+      const agora = new Date().toLocaleTimeString('pt-BR');
+      badge.textContent = `● Sascar KML · ${lista.length} veículos · ${agora}`;
+    }
+  } catch (err) {
+    console.error("Erro ao carregar KML:", err);
+  }
 }
+
 
 function sincronizarMarcadores(lista) {
   caminhoes = lista;
@@ -1385,22 +1363,10 @@ function pesquisarPlaca(){
       else document.exitFullscreen?.();
     }
 
-fetch("https://frota3-filtroamb.github.io/Mapa-Filtro/dados/veiculos.csv")
-    .then(response => {
-        console.log("Status:", response.status);
-        console.log("OK:", response.ok);
-        return response.text();
-    })
-    .then(texto => {
-        console.log("CSV carregado!");
-        console.log(texto);
-    })
-    .catch(err => {
-        console.error("Erro:", err);
-    });
-
 // Carrega a frota ao abrir o mapa
-carregarVeiculosCSV();
+carregarVeiculosKML();
+// Atualiza a cada 60 segundos
+setInterval(carregarVeiculosKML, 60000);
 
     
   </script>
