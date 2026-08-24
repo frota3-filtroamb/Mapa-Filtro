@@ -5,6 +5,7 @@
   <title>Filtroamb</title>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+  
   <style>
     * { box-sizing: border-box; }
     html, body {
@@ -410,6 +411,22 @@
     background:#555;
 }
 
+.placa-tooltip {
+  background: #0d5c2e;
+  border: 1px solid #08451f;
+  border-radius: 6px;
+  color: #ffffff;
+  font-size: 13px;
+  font-weight: 700;
+  padding: 5px 8px;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.25);
+}
+
+.placa-tooltip::before {
+  border-top-color: #0d5c2e;
+}
+
+
   </style>
 </head>
 <body>
@@ -680,7 +697,13 @@ function sincronizarMarcadores(lista) {
 
   lista.forEach(c => {
     const marker = L.marker([c.lat, c.lng], { icon: iconeCaminhao }).addTo(map);
-    marker.bindPopup(popupCaminhao(c));
+marker
+  .bindPopup(popupCaminhao(c))
+  .bindTooltip(c.placa, {
+    direction: 'top',
+    offset: [0, -22],
+    className: 'placa-tooltip'
+  });
     marker.on('click', () => abrirPainelCaminhao(c.placa));
     marcadoresCaminhoes.push({ placa: c.placa, marker });
     atualizarPainelSeAberto(c);
