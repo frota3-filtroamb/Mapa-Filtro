@@ -426,6 +426,27 @@
   border-top-color: #0d5c2e;
 }
 
+.leaflet-control-layers {
+  border: 1px solid #ccc;
+  border-radius: 8px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+  font-size: 13px;
+}
+
+.leaflet-control-layers-expanded {
+  padding: 8px 10px;
+  background: #ffffff;
+}
+
+.leaflet-control-layers label {
+  margin: 5px 0;
+  cursor: pointer;
+}
+
+.leaflet-control-layers input {
+  margin-right: 6px;
+}
+
 
   </style>
 </head>
@@ -532,11 +553,31 @@ setTimeout(() => {
     map.invalidateSize();
 }, 300);
 
-    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-      attribution: '© OpenStreetMap | Filtroamb'
-    }).addTo(map);
+const mapaPadrao = L.tileLayer(
+  'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',
+  {
+    attribution: '© OpenStreetMap | Filtroamb'
+  }
+);
 
+const mapaSatelite = L.tileLayer(
+  'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}',
+  {
+    attribution: '© Esri, Maxar, Earthstar Geographics'
+  }
+);
 
+mapaPadrao.addTo(map);
+
+const mapasBase = {
+  "Mapa padrão": mapaPadrao,
+  "Satélite": mapaSatelite
+};
+
+L.control.layers(mapasBase, null, {
+  collapsed: false,
+  position: 'topright'
+}).addTo(map);
 
 
 setTimeout(() => {
