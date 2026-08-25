@@ -630,22 +630,35 @@ function normalizarTexto(texto) {
     .toLowerCase();
 }
 
-function extrairCampo(descHtml, nome) {
+function extrairCampos(descHtml) {
   const html = decodeHtml(descHtml);
   const documento = new DOMParser().parseFromString(html, 'text/html');
-  const nomeNormalizado = normalizarTexto(nome);
+  const campos = {};
 
-  const linhas = documento.querySelectorAll('tr');
-
-  for (const linha of linhas) {
+  documento.querySelectorAll('tr').forEach(linha => {
     const celulas = linha.querySelectorAll('td');
-    if (celulas.length < 2) continue;
 
-    const label = normalizarTexto(celulas[0].textContent)
+    if (celulas.length < 2) return;
+
+    const nome = normalizarTexto(celulas[0].textContent)
       .replace(/:$/, '');
 
-    if (label === nomeNormalizado) {
-      return celulas[1].textContent.trim();
+    const valor = celulas[1].textContent.trim();
+
+    if (nome) {
+      campos[nome] = valor;
+    }
+  });
+
+  return campos;
+}
+
+function obterCampo(campos, ...nomes) {
+  for (const nome of nomes) {
+    const chave = normalizarTexto(nome).replace(/:$/, '');
+
+    if (campos[chave]) {
+      return campos[chave];
     }
   }
 
@@ -679,19 +692,28 @@ function parseKmlSascar(kmlText) {
     const lat = parseFloat(parts[1]);
     if (isNaN(lat) || isNaN(lng)) continue;
 
-    const placa = extrairCampo(desc, 'Placa');
-    if (!placa) continue;
+const campos = extrairCampos(desc);
 
-    const municipio = extrairCampo(desc, 'Município') || extrairCampo(desc, 'Municipio');
-    const estado = extrairCampo(desc, 'Estado');
-    const rua = extrairCampo(desc, 'Rua');
-    const ignTxt = extrairCampo(desc, 'Ignição') || extrairCampo(desc, 'Ignicao');
-    const velTxt = extrairCampo(desc, 'Velocidade');
-    const data = extrairCampo(desc, 'Data');
-    const motorista = extrairCampo(desc, 'Motorista');
-    const bateria = extrairCampo(desc, 'Bateria (V)') || extrairCampo(desc, 'Bateria') ||
-                    extrairCampo(desc, 'Voltagem') ||
-                    extrairCampo(desc, 'Tensão da bateria') || '';
+const placa = obterCampo(campos, 'Placa');
+if (!placa) continue;
+
+const municipio = obterCampo(campos, 'Município', 'Municipio');
+const estado = obterCampo(campos, 'Estado');
+const rua = obterCampo(campos, 'Rua');
+const ignTxt = obterCampo(campos, 'Ignição', 'Ignicao');
+const velTxt = obterCampo(campos, 'Velocidade');
+const data = obterCampo(campos, 'Data');
+const motorista = obterCampo(campos, 'Motorista');
+
+const bateria = obterCampo(
+  campos,
+  'Bateria (V)',
+  'Bateria',
+  'Voltagem',
+  'Voltagem da bateria',
+  'Tensão',
+  'Tensão da bateria'
+);
 
     lista.push({
       placa: placa.toUpperCase(),
