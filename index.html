@@ -1,14 +1,14 @@
+
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
   <meta charset="UTF-8">
   <title>Filtroamb</title>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
-  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
-
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+  
   <style>
     * { box-sizing: border-box; }
-
     html, body {
       margin: 0;
       width: 100%;
@@ -17,296 +17,440 @@
       font-family: 'Segoe UI', system-ui, Arial, sans-serif;
       background: #f4f6f8;
     }
-
     body { display: flex; }
-
     #sidebar {
       width: 340px;
-      background: #fff;
+      background: #ffffff;
       border-right: 1px solid #e0e0e0;
       display: flex;
       flex-direction: column;
-      box-shadow: 2px 0 8px rgba(0,0,0,.05);
+      box-shadow: 2px 0 8px rgba(0,0,0,0.05);
       overflow-y: auto;
       height: 100vh;
       flex-shrink: 0;
     }
-
     .header {
       background: #0d5c2e;
-      color: #fff;
+      color: white;
       padding: 22px 24px;
       text-align: center;
+      flex-shrink: 0;
     }
-
-    .header h1 {
-      margin: 0;
-      font-size: 1.35rem;
-      font-weight: 600;
-    }
-
-    .header p {
-      margin: 6px 0 0;
-      font-size: .85rem;
-      opacity: .85;
-    }
-
+    .header h1 { margin: 0; font-size: 1.35rem; font-weight: 600; }
+    .header p { margin: 6px 0 0; font-size: 0.85rem; opacity: 0.85; }
     .section { margin: 12px 16px; }
-
     details {
       background: #fff;
       border: 1px solid #e0e0e0;
       border-radius: 8px;
       margin-bottom: 12px;
-      box-shadow: 0 1px 3px rgba(0,0,0,.06);
+      box-shadow: 0 1px 3px rgba(0,0,0,0.06);
     }
-
     summary {
       padding: 14px 18px;
       font-weight: 600;
-      font-size: .95rem;
+      font-size: 0.95rem;
       cursor: pointer;
       background: #f8f9fa;
       border-radius: 8px;
       color: #0d5c2e;
+      display: flex;
+      align-items: center;
+      gap: 8px;
     }
-
-    table {
-      width: 100%;
-      border-collapse: collapse;
-      font-size: .9rem;
-    }
-
+    table { width: 100%; border-collapse: collapse; font-size: 0.9rem; }
     td {
       padding: 13px 18px;
       border-bottom: 1px solid #f0f0f0;
       cursor: pointer;
+      transition: background 0.2s;
     }
-
     td:hover { background: #f0f7f0; }
-
     .info {
       padding: 16px 18px;
-      font-size: .82rem;
+      font-size: 0.82rem;
       color: #555;
       background: #f8f9fa;
+      border-radius: 0 0 8px 8px;
     }
-
-    .map-wrapper {
-      position: relative;
-      flex: 1;
-      height: 100vh;
-    }
-
-    #map {
-      width: 100%;
-      height: 100%;
-    }
+    .map-wrapper { position: relative; flex: 1; height: 100vh; }
+    #map { width: 100%; height: 100%; }
 
     .fullscreen-btn {
       position: absolute;
       top: 12px;
       right: 150px;
       z-index: 1000;
-      background: #fff;
+      background: white;
       border: 1px solid #ccc;
       border-radius: 6px;
       padding: 8px 10px;
       cursor: pointer;
       font-size: 14px;
-      box-shadow: 0 2px 6px rgba(0,0,0,.15);
+      box-shadow: 0 2px 6px rgba(0,0,0,0.15);
     }
-
     #statusFrota {
       position: absolute;
       bottom: 18px;
       left: 12px;
       z-index: 1000;
-      background: rgba(13,92,46,.92);
+      background: rgba(13, 92, 46, 0.92);
       color: #fff;
       border-radius: 20px;
       padding: 8px 14px;
-      font-size: .78rem;
+      font-size: 0.78rem;
       font-weight: 600;
-      box-shadow: 0 2px 8px rgba(0,0,0,.2);
+      box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+      backdrop-filter: blur(4px);
+      letter-spacing: 0.2px;
     }
-
     .map-legend {
       position: absolute;
-      top: 75px;
+      top:  75px;
       left: 12px;
       z-index: 1000;
-      background: rgba(255,255,255,.96);
+      background: rgba(255,255,255,0.96);
       border: 1px solid #d9d9d9;
       border-radius: 8px;
       padding: 8px 10px;
-      box-shadow: 0 2px 8px rgba(0,0,0,.12);
+      box-shadow: 0 2px 8px rgba(0,0,0,0.12);
       min-width: 160px;
-      font-size: .78rem;
+      font-size: 0.78rem;
+      backdrop-filter: blur(4px);
     }
-
     .map-legend-title {
       font-weight: 700;
+      color: #2f2f2f;
       margin-bottom: 6px;
+      font-size: 0.8rem;
     }
-
     .map-legend-item {
       display: flex;
       align-items: center;
       gap: 7px;
       margin-bottom: 4px;
       color: #333;
+      white-space: nowrap;
       cursor: pointer;
       padding: 4px 6px;
       border-radius: 6px;
+      transition: background 0.15s, opacity 0.15s;
+      user-select: none;
     }
-
-    .map-legend-item:hover { background: #f0f4f0; }
-    .map-legend-item.inativo { opacity: .35; }
+    .map-legend-item:hover {
+      background: #f0f4f0;
+    }
+    .map-legend-item.inativo {
+      opacity: 0.35;
+    }
     .map-legend-item.ativo-filtro {
       background: #e8f5e9;
       font-weight: 600;
     }
-
     .map-legend-color {
       width: 10px;
       height: 10px;
       border-radius: 50%;
-      border: 1px solid rgba(0,0,0,.2);
+      border: 1px solid rgba(0,0,0,0.2);
+      flex-shrink: 0;
     }
-
     .map-legend-todos {
       margin-top: 6px;
       padding-top: 6px;
       border-top: 1px solid #e5e5e5;
+      font-size: 0.75rem;
       color: #0d5c2e;
       cursor: pointer;
       font-weight: 600;
     }
-
-    #buscarPlaca {
-      width: 100%;
-      padding: 12px;
-      border-radius: 8px;
-      border: 1px solid #cfcfcf;
-      font-size: 15px;
-      outline: none;
-    }
-
-    .btn-kml {
-      width: 100%;
-      margin-top: 10px;
-      padding: 11px 12px;
-      border-radius: 8px;
-      border: 1px solid #0d5c2e;
-      background: #0d5c2e;
-      color: #fff;
-      font-size: 14px;
-      font-weight: 600;
-      cursor: pointer;
-    }
-
-    #painelCaminhao {
-      position: absolute;
-      top: 0;
-      right: -360px;
-      width: 340px;
-      height: 100%;
-      background: #fff;
-      z-index: 1200;
-      box-shadow: -5px 0 20px rgba(0,0,0,.18);
-      transition: .35s;
-      overflow-y: auto;
-    }
-
-    #painelCaminhao.ativo { right: 0; }
-
-    #painelHeader {
-      background: #0d5c2e;
-      color: #fff;
-      padding: 18px;
-      font-size: 22px;
-      font-weight: bold;
-    }
-
-    #fecharPainel {
-      float: right;
-      cursor: pointer;
-    }
-
-    .cardInfo {
-      padding: 18px;
-      border-bottom: 1px solid #ececec;
-    }
-
-    .cardTitulo {
-      color: #777;
-      font-size: 13px;
-    }
-
-    .cardValor {
-      margin-top: 5px;
-      font-size: 18px;
-      font-weight: bold;
-    }
-
-    .oficinaItem {
-      padding: 12px;
-      margin-top: 10px;
-      border-radius: 8px;
-      background: #f7f7f7;
-      border-left: 5px solid #0d5c2e;
-    }
-
-    .oficinaNome {
-      font-weight: bold;
-      font-size: 15px;
-    }
-
-    .oficinaDistancia {
-      color: #666;
-      margin-top: 4px;
-      font-size: 13px;
-    }
-
-    .oficinaAcoes {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 6px;
-      margin-top: 10px;
-    }
-
-    .btnRota {
-      border: none;
-      border-radius: 6px;
-      padding: 7px 10px;
-      font-size: 12px;
-      font-weight: 600;
-      cursor: pointer;
-      color: #fff;
-    }
-
-    .btnRotaMaps { background: #1a73e8; }
-    .btnRotaWaze { background: #33ccff; color: #0b3d4a; }
-    .btnRotaCopiar { background: #0d5c2e; }
-
-    .placa-tooltip {
-      background: #0d5c2e;
-      border: 1px solid #08451f;
-      border-radius: 6px;
-      color: #fff;
-      font-size: 13px;
-      font-weight: 700;
-      padding: 5px 8px;
+    .map-legend-todos:hover {
+      text-decoration: underline;
     }
 
     .gm-popup {
       width: 250px;
       font-family: Arial, sans-serif;
     }
+    .gm-img {
+      width: 100%;
+      height: 120px;
+      object-fit: cover;
+      border-radius: 10px;
+      margin-bottom: 8px;
+      display: block;
+    }
+    .gm-title {
+      font-size: 15px;
+      font-weight: 700;
+      color: #202124;
+      margin-bottom: 4px;
+    }
+    .gm-sub {
+      font-size: 12px;
+      color: #5f6368;
+      margin-bottom: 8px;
+      line-height: 1.35;
+    }
+    .gm-link {
+      display: inline-block;
+      text-decoration: none;
+      background: #1a73e8;
+      color: #fff;
+      padding: 7px 10px;
+      border-radius: 6px;
+      font-size: 12px;
+      font-weight: 600;
+    }
+    .gm-link:hover { background: #155fc0; }
+    .leaflet-popup-content-wrapper {
+      border-radius: 14px;
+      box-shadow: 0 4px 18px rgba(0,0,0,0.18);
+    }
+    .leaflet-popup-content {
+      margin: 12px;
+    }
+
+    #buscarPlaca{
+    width:100%;
+    padding:12px;
+    border-radius:8px;
+    border:1px solid #cfcfcf;
+    font-size:15px;
+    outline:none;
+    transition:.2s;
+}
+
+#buscarPlaca:focus{
+    border-color:#0d5c2e;
+    box-shadow:0 0 6px rgba(13,92,46,.25);
+}
+
+.btn-kml{
+    width:100%;
+    margin-top:10px;
+    padding:11px 12px;
+    border-radius:8px;
+    border:1px solid #0d5c2e;
+    background:#0d5c2e;
+    color:#fff;
+    font-size:14px;
+    font-weight:600;
+    cursor:pointer;
+    transition:.2s;
+}
+.btn-kml:hover{
+    background:#0a4a24;
+}
+
+/* ===========================
+   PAINEL DO CAMINHÃO
+=========================== */
+
+#painelCaminhao{
+
+    position:absolute;
+
+    top:0;
+    right:-360px;
+
+    width:340px;
+    height:100%;
+
+    background:#fff;
+
+    z-index:1200;
+
+    box-shadow:-5px 0 20px rgba(0,0,0,.18);
+
+    transition:.35s;
+
+    overflow-y:auto;
+
+}
+
+#painelCaminhao.ativo{
+
+    right:0;
+
+}
+
+#painelHeader{
+
+    background:#0d5c2e;
+    color:#fff;
+
+    padding:18px;
+
+    font-size:22px;
+
+    font-weight:bold;
+
+}
+
+#fecharPainel{
+
+    float:right;
+
+    cursor:pointer;
+
+    font-size:22px;
+
+}
+
+.cardInfo{
+
+    padding:18px;
+
+    border-bottom:1px solid #ececec;
+
+}
+
+.cardTitulo{
+
+    color:#777;
+
+    font-size:13px;
+
+}
+
+.cardValor{
+
+    margin-top:5px;
+
+    font-size:18px;
+
+    font-weight:bold;
+
+}
+
+.oficinaItem{
+
+    padding:12px;
+
+    margin-top:10px;
+
+    border-radius:8px;
+
+    background:#f7f7f7;
+
+    border-left:5px solid #0d5c2e;
+
+    cursor:pointer;
+
+    transition:.2s;
+
+}
+
+.oficinaItem:hover{
+
+    background:#eaf6ee;
+
+}
+
+.oficinaNome{
+
+    font-weight:bold;
+
+    font-size:15px;
+
+}
+
+.oficinaDistancia{
+
+    color:#666;
+
+    margin-top:4px;
+
+    font-size:13px;
+
+}
+
+.oficinaAcoes{
+    display:flex;
+    flex-wrap:wrap;
+    gap:6px;
+    margin-top:10px;
+}
+
+.btnRota{
+    border:none;
+    border-radius:6px;
+    padding:7px 10px;
+    font-size:12px;
+    font-weight:600;
+    cursor:pointer;
+    color:#fff;
+    transition:.15s;
+}
+
+.btnRotaMaps{
+    background:#1a73e8;
+}
+.btnRotaMaps:hover{
+    background:#155fc0;
+}
+
+.btnRotaWaze{
+    background:#33ccff;
+    color:#0b3d4a;
+}
+.btnRotaWaze:hover{
+    background:#1ab8e6;
+}
+
+.btnRotaCopiar{
+    background:#0d5c2e;
+}
+.btnRotaCopiar:hover{
+    background:#0a4a24;
+}
+
+.btnRotaMapa{
+    background:#666;
+}
+.btnRotaMapa:hover{
+    background:#555;
+}
+
+.placa-tooltip {
+  background: #0d5c2e;
+  border: 1px solid #08451f;
+  border-radius: 6px;
+  color: #ffffff;
+  font-size: 13px;
+  font-weight: 700;
+  padding: 5px 8px;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.25);
+}
+
+.placa-tooltip::before {
+  border-top-color: #0d5c2e;
+}
+
+.leaflet-control-layers {
+  border: 1px solid #ccc;
+  border-radius: 8px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+  font-size: 13px;
+}
+
+.leaflet-control-layers-expanded {
+  padding: 8px 10px;
+  background: #ffffff;
+}
+
+.leaflet-control-layers label {
+  margin: 5px 0;
+  cursor: pointer;
+}
+
+.leaflet-control-layers input {
+  margin-right: 6px;
+}
+
+
   </style>
 </head>
-
 <body>
   <div id="sidebar">
     <div class="header">
@@ -315,26 +459,17 @@
     </div>
 
     <div class="section">
-      <input
-        type="text"
-        id="buscarPlaca"
-        placeholder="🔍 Pesquisar placa..."
-        onkeydown="if(event.key === 'Enter') pesquisarPlaca()">
 
-      <button
-        type="button"
-        class="btn-kml"
-        onclick="document.getElementById('inputKml').click()">
-        📂 Importar KML Sascar
-      </button>
-
-      <input
-        type="file"
-        id="inputKml"
-        accept=".kml,.kmz,application/vnd.google-earth.kml+xml"
-        style="display:none"
-        onchange="onKmlFileSelected(event)">
-    </div>
+<input
+    type="text"
+    id="buscarPlaca"
+    placeholder="🔍 Pesquisar placa..."
+    onkeydown="if(event.key === 'Enter') pesquisarPlaca()">
+  <button type="button" id="btnImportarKml" class="btn-kml" onclick="document.getElementById('inputKml').click()">
+    📂 Importar KML Sascar
+  </button>
+  <input type="file" id="inputKml" accept=".kml,.kmz,application/vnd.google-earth.kml+xml" style="display:none" onchange="onKmlFileSelected(event)">
+</div>
 
     <div class="section">
       <details open>
@@ -353,418 +488,998 @@
 
   <div class="map-wrapper">
     <button class="fullscreen-btn" onclick="toggleFullscreen()">⛶ Tela cheia</button>
-
     <div class="map-legend">
       <div class="map-legend-title">Legenda</div>
       <div id="legend"></div>
     </div>
-
     <div id="map"></div>
     <div id="statusFrota">● Carregando frota...</div>
-
     <div id="painelCaminhao">
-      <div id="painelHeader">
+
+    <div id="painelHeader">
+
         🚚 Caminhão
+
         <span id="fecharPainel">✖</span>
-      </div>
 
-      <div class="cardInfo">
-        <div class="cardTitulo">Placa</div>
-        <div class="cardValor" id="infoPlaca">-</div>
-      </div>
-
-      <div class="cardInfo">
-        <div class="cardTitulo">Cidade</div>
-        <div class="cardValor" id="infoCidade">-</div>
-      </div>
-
-      <div class="cardInfo">
-        <div class="cardTitulo">Ignição</div>
-        <div class="cardValor" id="infoIgnicao">-</div>
-      </div>
-
-      <div class="cardInfo">
-        <div class="cardTitulo">Velocidade</div>
-        <div class="cardValor" id="infoVelocidade">-</div>
-      </div>
-
-      <div class="cardInfo">
-        <div class="cardTitulo">Voltagem da bateria</div>
-        <div class="cardValor" id="infoBateria">-</div>
-      </div>
-
-      <div class="cardInfo">
-        <div class="cardTitulo">🔧 Oficinas próximas</div>
-        <div id="listaOficinas"></div>
-      </div>
     </div>
+
+    <div class="cardInfo">
+
+        <div class="cardTitulo">Placa</div>
+
+        <div class="cardValor" id="infoPlaca">-</div>
+
+    </div>
+
+    <div class="cardInfo">
+
+        <div class="cardTitulo">Cidade</div>
+
+        <div class="cardValor" id="infoCidade">-</div>
+
+    </div>
+
+    <div class="cardInfo">
+
+        <div class="cardTitulo">Ignição</div>
+
+        <div class="cardValor" id="infoIgnicao">-</div>
+
+    </div>
+
+    <div class="cardInfo">
+
+        <div class="cardTitulo">Velocidade</div>
+
+        <div class="cardValor" id="infoVelocidade">-</div>
+
+<div class="cardInfo">
+    <div class="cardTitulo">Voltagem da bateria</div>
+    <div class="cardValor" id="infoBateria">-</div>
+</div>
+
+    </div>
+<div class="cardInfo">
+
+    <div class="cardTitulo">
+        🔧 Oficinas próximas
+    </div>
+
+    <div id="listaOficinas"></div>
+
+</div>
   </div>
 
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-
   <script>
     const map = L.map('map').setView([-26, -50], 6.5);
 
-    const mapaPadrao = L.tileLayer(
-      'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',
-      { attribution: '© OpenStreetMap | Filtroamb' }
-    ).addTo(map);
+setTimeout(() => {
+    map.invalidateSize();
+}, 300);
 
-    const mapaSatelite = L.tileLayer(
-      'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}',
-      { attribution: '© Esri, Maxar, Earthstar Geographics' }
-    );
+const mapaPadrao = L.tileLayer(
+  'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',
+  {
+    attribution: '© OpenStreetMap | Filtroamb'
+  }
+);
 
-    L.control.layers({
-      'Mapa padrão': mapaPadrao,
-      'Satélite': mapaSatelite
-    }, null, {
-      collapsed: false,
-      position: 'topright'
-    }).addTo(map);
+const mapaSatelite = L.tileLayer(
+  'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}',
+  {
+    attribution: '© Esri, Maxar, Earthstar Geographics'
+  }
+);
 
-    let marcadoresCaminhoes = [];
-    let caminhoes = [];
-    let placaSelecionada = null;
-    let circuloCaminhao = null;
+mapaPadrao.addTo(map);
 
-    const iconeCaminhao = L.icon({
-      iconUrl: 'https://cdn-icons-png.flaticon.com/512/3097/3097180.png',
-      iconSize: [42, 42],
-      iconAnchor: [21, 21],
-      popupAnchor: [0, -20]
+const mapasBase = {
+  "Mapa padrão": mapaPadrao,
+  "Satélite": mapaSatelite
+};
+
+L.control.layers(mapasBase, null, {
+  collapsed: false,
+  position: 'topright'
+}).addTo(map);
+
+
+setTimeout(() => {
+    map.invalidateSize();
+}, 500);
+
+
+
+
+
+// ===============================
+// FROTA SASCAR VIA KML
+// ===============================
+// Como usar:
+// 1) No portal Sascar, exporte Google Earth (KML)
+// 2) Clique em "Importar KML Sascar" e selecione o arquivo
+// 3) Ou coloque location.kml na mesma pasta do HTML e abra via servidor local
+
+let marcadoresCaminhoes = [];
+let caminhoes = [];
+let placaSelecionada = null;
+let circuloCaminhao = null;
+let currentMarkers = [];
+
+const iconeCaminhao = L.icon({
+  iconUrl: "https://cdn-icons-png.flaticon.com/512/3097/3097180.png",
+  iconSize: [42, 42],
+  iconAnchor: [21, 21],
+  popupAnchor: [0, -20]
+});
+
+function decodeHtml(html) {
+  const txt = document.createElement('textarea');
+  txt.innerHTML = html;
+  return txt.value;
+}
+
+function normalizarTexto(texto) {
+  return String(texto || '')
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .replace(/\s+/g, ' ')
+    .trim()
+    .toLowerCase();
+}
+
+function extrairCampo(descHtml, nome) {
+  const html = decodeHtml(descHtml);
+  const documento = new DOMParser().parseFromString(html, 'text/html');
+  const nomeNormalizado = normalizarTexto(nome);
+
+  const linhas = documento.querySelectorAll('tr');
+
+  for (const linha of linhas) {
+    const celulas = linha.querySelectorAll('td');
+    if (celulas.length < 2) continue;
+
+    const label = normalizarTexto(celulas[0].textContent)
+      .replace(/:$/, '');
+
+    if (label === nomeNormalizado) {
+      return celulas[1].textContent.trim();
+    }
+  }
+
+  return '';
+}
+
+function parseVelocidade(txt) {
+  const m = String(txt).match(/([\d.,]+)/);
+  return m ? parseFloat(m[1].replace(',', '.')) : 0;
+}
+
+/** Lê o KML exportado pela Sascar e devolve lista de caminhões */
+function parseKmlSascar(kmlText) {
+  const parser = new DOMParser();
+  const xml = parser.parseFromString(kmlText, 'text/xml');
+  const placemarks = xml.getElementsByTagName('Placemark');
+  const lista = [];
+
+  for (let i = 0; i < placemarks.length; i++) {
+    const pm = placemarks[i];
+    const descNode = pm.getElementsByTagName('description')[0];
+    const coordNode = pm.getElementsByTagName('coordinates')[0];
+    if (!descNode || !coordNode) continue;
+
+    const desc = descNode.textContent || '';
+    const coordTxt = (coordNode.textContent || '').trim();
+    const parts = coordTxt.split(',');
+    if (parts.length < 2) continue;
+
+    const lng = parseFloat(parts[0]);
+    const lat = parseFloat(parts[1]);
+    if (isNaN(lat) || isNaN(lng)) continue;
+
+    const placa = extrairCampo(desc, 'Placa');
+    if (!placa) continue;
+
+    const municipio = extrairCampo(desc, 'Município') || extrairCampo(desc, 'Municipio');
+    const estado = extrairCampo(desc, 'Estado');
+    const rua = extrairCampo(desc, 'Rua');
+    const ignTxt = extrairCampo(desc, 'Ignição') || extrairCampo(desc, 'Ignicao');
+    const velTxt = extrairCampo(desc, 'Velocidade');
+    const data = extrairCampo(desc, 'Data');
+    const motorista = extrairCampo(desc, 'Motorista');
+    const bateria = extrairCampo(desc, 'Bateria (V)') || extrairCampo(desc, 'Bateria') ||
+                    extrairCampo(desc, 'Voltagem') ||
+                    extrairCampo(desc, 'Tensão da bateria') || '';
+
+    lista.push({
+      placa: placa.toUpperCase(),
+      cidade: [municipio, estado].filter(Boolean).join(' - ') || '—',
+      rua: rua || '',
+      lat,
+      lng,
+      ignicao: /ligada/i.test(ignTxt),
+      velocidade: parseVelocidade(velTxt),
+      data: data || '',
+      motorista: motorista || '',
+      bateria: bateria || ''
+    });
+  }
+
+  return lista;
+}
+
+function formatarBateria(valor) {
+  const texto = String(valor || '').trim();
+
+  if (!texto || texto === '-' || texto === '—') {
+    return 'Não informado';
+  }
+
+  return /v\b|volt/i.test(texto) ? texto : texto + ' V';
+}
+
+
+function popupCaminhao(c) {
+  return `
+    <b>🚚 ${c.placa}</b><br>
+    📍 ${c.cidade}${c.rua ? '<br>🛣 ' + c.rua : ''}<br>
+    ⚡ Ignição: ${c.ignicao ? 'Ligada' : 'Desligada'}<br>
+    🏎️ Velocidade: ${c.velocidade} km/h
+    ${c.data ? '<br>🕒 ' + c.data : ''}
+  `;
+}
+
+function atualizarPainelSeAberto(c) {
+  if (!placaSelecionada || placaSelecionada !== c.placa) return;
+  document.getElementById("infoPlaca").innerText = c.placa;
+  document.getElementById("infoCidade").innerText = c.cidade;
+  document.getElementById("infoIgnicao").innerText =
+    c.ignicao ? "🟢 Ligada" : "🔴 Desligada";
+  document.getElementById("infoVelocidade").innerText = c.velocidade + " km/h";
+  document.getElementById("infoBateria").innerText =
+  formatarBateria(c.bateria);
+}
+
+function limparMarcadoresCaminhoes() {
+  marcadoresCaminhoes.forEach(item => {
+    map.removeLayer(item.marker);
+  });
+  marcadoresCaminhoes = [];
+}
+
+async function carregarVeiculosKML() {
+  try {
+    const resposta = await fetch("https://frota3-filtroamb.github.io/Mapa-Filtro/dados/veiculos.kml");
+    if (!resposta.ok) {
+      console.error("Erro ao carregar KML:", resposta.status);
+      return;
+    }
+    const kmlText = await resposta.text();
+    const lista = parseKmlSascar(kmlText);
+    
+    if (lista.length === 0) {
+      console.warn("Nenhum veículo encontrado no KML");
+      return;
+    }
+    
+    sincronizarMarcadores(lista);
+    
+    const badge = document.getElementById('statusFrota');
+    if (badge) {
+      const agora = new Date().toLocaleTimeString('pt-BR');
+      badge.textContent = `● Sascar KML · ${lista.length} veículos · ${agora}`;
+    }
+  } catch (err) {
+    console.error("Erro ao carregar KML:", err);
+  }
+}
+
+
+function sincronizarMarcadores(lista) {
+  caminhoes = lista;
+  limparMarcadoresCaminhoes();
+
+  lista.forEach(c => {
+    const marker = L.marker([c.lat, c.lng], { icon: iconeCaminhao }).addTo(map);
+marker
+  .bindPopup(popupCaminhao(c))
+  .bindTooltip(c.placa, {
+    direction: 'top',
+    offset: [0, -22],
+    className: 'placa-tooltip'
+  });
+    marker.on('click', () => abrirPainelCaminhao(c.placa));
+    marcadoresCaminhoes.push({ placa: c.placa, marker });
+    atualizarPainelSeAberto(c);
+  });
+
+  // se painel aberto, reposiciona círculo
+  if (placaSelecionada) {
+    const dados = caminhoes.find(c => c.placa === placaSelecionada);
+    if (dados && circuloCaminhao) {
+      circuloCaminhao.setLatLng([dados.lat, dados.lng]);
+    }
+  }
+
+  const badge = document.getElementById('statusFrota');
+  if (badge) {
+    const agora = new Date().toLocaleTimeString('pt-BR');
+    badge.textContent = `● Sascar KML · ${lista.length} veículos · ${agora}`;
+  }
+}
+
+function carregarFrotaDoKml(kmlText) {
+  try {
+    const lista = parseKmlSascar(kmlText);
+    if (!lista.length) {
+      alert('Nenhum veículo encontrado neste KML.');
+      return;
+    }
+    sincronizarMarcadores(lista);
+  } catch (e) {
+    console.error(e);
+    alert('Erro ao ler o arquivo KML. Verifique se é o export Google Earth da Sascar.');
+  }
+}
+
+function onKmlFileSelected(event) {
+  const file = event.target.files && event.target.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = () => carregarFrotaDoKml(String(reader.result || ''));
+  reader.readAsText(file);
+}
+
+/** Tenta carregar location.kml da mesma pasta (só funciona em servidor local/http) */
+async function tentarCarregarKmlLocal() {
+  try {
+    const res = await fetch('location.kml', { cache: 'no-store' });
+    if (!res.ok) return;
+    const text = await res.text();
+    if (text.includes('<Placemark>')) {
+      carregarFrotaDoKml(text);
+    }
+  } catch (e) {
+    // arquivo local sem servidor: normal — use o botão Importar
+  }
+}
+
+function abrirPainelCaminhao(placa) {
+  const dados = caminhoes.find(c => c.placa.toUpperCase() === placa.toUpperCase());
+  if (!dados) return;
+
+  placaSelecionada = dados.placa.toUpperCase();
+
+  if (circuloCaminhao) map.removeLayer(circuloCaminhao);
+
+  const posicao = { lat: dados.lat, lng: dados.lng };
+
+  circuloCaminhao = L.circle([dados.lat, dados.lng], {
+    radius: 5000,
+    color: "#0d5c2e",
+    fillColor: "#0d5c2e",
+    fillOpacity: 0.15,
+    weight: 3
+  }).addTo(map);
+
+  map.flyToBounds(circuloCaminhao.getBounds(), { padding: [40, 40], duration: 1.2 });
+
+  const item = marcadoresCaminhoes.find(m => m.placa === placaSelecionada);
+  if (item) item.marker.openPopup();
+
+  painel.classList.add("ativo");
+  document.getElementById("infoPlaca").innerText = dados.placa;
+  document.getElementById("infoCidade").innerText = dados.cidade;
+  document.getElementById("infoIgnicao").innerText =
+    dados.ignicao ? "🟢 Ligada" : "🔴 Desligada";
+  document.getElementById("infoVelocidade").innerText = dados.velocidade + " km/h";
+  document.getElementById("infoBateria").innerText =
+  formatarBateria(dados.bateria);
+
+  clearMarkers();
+  addOficinas(Object.values(oficinasPorUnidade).flat(), posicao);
+  mostrarOficinasProximas(dados.lat, dados.lng);
+}
+
+// tenta KML na mesma pasta; senão o usuário importa pelo botão
+tentarCarregarKmlLocal();
+
+let marcadoresOficinas = [];
+    const grandeIcon = L.icon({
+      iconUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon.png',
+      shadowUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png',
+      iconSize: [38, 55], iconAnchor: [19, 55], popupAnchor: [0, -45]
     });
 
-    function decodeHtml(html) {
-      const textarea = document.createElement('textarea');
-      textarea.innerHTML = html;
-      return textarea.value;
-    }
+    let unidades = [
+      {nome: "Matriz - Araquari", cidade: "Araquari - SC", coords: [-26.366, -48.845], oficinas: 45, grande: true},
+      {nome: "Chapecó", cidade: "Chapecó - SC", coords: [-27.1004, -52.6152], oficinas: 12, grande: false},
+      {nome: "São Vicente", cidade: "São Vicente - SP", coords: [-23.9631, -46.3919], oficinas: 8, grande: false},
+      {nome: "Canoas", cidade: "Canoas - RS", coords: [-29.9094, -51.1738], oficinas: 15, grande: false},
+      {nome: "Osasco", cidade: "Osasco - SP", coords: [-23.5329, -46.7917], oficinas: 10, grande: false},
+      {nome: "São José dos Pinhais", cidade: "São José dos Pinhais - PR", coords: [-25.5313, -49.2031], oficinas: 14, grande: false},
+      {nome: "Rolândia", cidade: "Rolândia - PR", coords: [-23.3093, -51.3692], oficinas: 9, grande: false},
+      {nome: "Pescaria Brava", cidade: "Pescaria Brava - SC", coords: [-28.3967, -48.8861], oficinas: 18, grande: false},
+      {nome: "Duque de Caxias", cidade: "Duque de Caxias - RJ", coords: [-22.7856, -43.3117], oficinas: 16, grande: false},
+      {nome: "Governador Celso Ramos", cidade: "Governador Celso Ramos - SC", coords: [-27.3174, -48.5565], oficinas: 7, grande: false},
+      {nome: "Rodeio", cidade: "Rodeio - SC", coords: [-26.9224, -49.3640], oficinas: 9, grande: false}
+    ];
 
-    function normalizarTexto(texto) {
-      return String(texto || '')
-        .normalize('NFD')
-        .replace(/[\u0300-\u036f]/g, '')
-        .replace(/\s+/g, ' ')
-        .trim()
-        .toLowerCase();
-    }
+    const matriz = unidades.find(u => u.nome === "Matriz - Araquari");
+    const outras = unidades.filter(u => u.nome !== "Matriz - Araquari").sort((a, b) => a.nome.localeCompare(b.nome));
+    unidades = [matriz, ...outras];
 
-    function extrairCampo(descHtml, nome) {
-      const html = decodeHtml(descHtml);
-      const documento = new DOMParser().parseFromString(html, 'text/html');
-      const nomeNormalizado = normalizarTexto(nome);
+    const imgByType = {
+      ELETRICA: "https://images.unsplash.com/photo-1517048676732-d65bc937f952?w=900&q=85",
+      MECANICA: "https://images.unsplash.com/photo-1486006920555-c77dcf18193c?w=900&q=85",
+      TACOGRAFO: "https://images.unsplash.com/photo-1517048676732-d65bc937f952?w=900&q=85",
+      LAVAÇÃO: "https://images.unsplash.com/photo-1520342868574-5fa3804e551c?w=900&q=85",
+      AUTOPEÇA: "https://images.unsplash.com/photo-1489824904134-891ab64532f1?w=900&q=85",
+      BORRACHARIA: "https://images.unsplash.com/photo-1486006920555-c77dcf18193c?w=900&q=85",
+      GUINCHO: "https://images.unsplash.com/photo-1493238792000-8113da705763?w=900&q=85"
+    };
 
-      for (const linha of documento.querySelectorAll('tr')) {
-        const celulas = [...linha.querySelectorAll('td, th')];
-        if (celulas.length < 2) continue;
+    const oficinasPorUnidade = {
+      "Matriz - Araquari": [
+        {nome: "Tec.Sat Sistemas", tipo: "ELETRICA", coords: [-26.416035565097832, -48.78553246275945], endereco: "Araquari - SC"},
+        {nome: "Mecânica D.A. Diesel", tipo: "MECANICA", coords: [-26.41780889943634, -48.79353921857906], endereco: "Araquari - SC"},
+        {nome: "Truck Diag Elétrica Diesel", tipo: "ELETRICA", coords: [-26.417252966415496, -48.77739523392317], endereco: "Araquari - SC"},
+        {nome: "Mecânica João Grandão", tipo: "MECANICA", coords: [-26.416667671825575, -48.77113530508729], endereco: "Araquari - SC"},
+        {nome: "Mecânica Dela Diesel - Araquari", tipo: "MECANICA", coords: [-26.442769219535425, -48.81002761857797], endereco: "Araquari - SC"},
+        {nome: "Dicave | Volvo Caminhões - Joinville", tipo: "MECANICA", coords: [-26.4366, -48.8115], endereco: "Joinville - SC"},
+        {nome: "Air Truck", tipo: "MECANICA", coords: [-26.435490196093742, -48.81031729796299], endereco: "Joinville - SC"},
+        {nome: "Lorenzi Tacógrafos", tipo: "TACOGRAFO", coords: [-26.43426332114971, -48.81194080323427], endereco: "Joinville - SC"},
+        {nome: "Eixo Sul Lavação", tipo: "LAVAÇÃO", coords: [-26.434869271433104, -48.81272194741432], endereco: "Joinville - SC"},
+        {nome: "Diferenciais Guaramirim", tipo: "MECANICA", coords: [-26.4346, -48.8115], endereco: "Joinville - SC"},
+        {nome: "Assis Caminhões", tipo: "MECANICA", coords: [-26.4341, -48.8156], endereco: "Joinville - SC"},
+        {nome: "Escapamentos Catarina Auto Center", tipo: "AUTOPEÇA", coords: [-26.2809, -48.8494], endereco: "Joinville - SC"},
+        {nome: "Caminhão & Cia", tipo: "MECANICA", coords: [-26.2688, -48.8491], endereco: "Joinville - SC"},
+        {nome: "Oficina Camarão - Funilaria de Caminhões em Joinville", tipo: "MECANICA", coords: [-26.2654, -48.8566], endereco: "Joinville - SC"},
+        {nome: "Truck Pneus Joinville", tipo: "BORRACHARIA", coords: [-26.2495, -48.8649], endereco: "Joinville - SC"},
+        {nome: "Bilk Diesel Mecânica Diesel", tipo: "MECANICA", coords: [-26.2909, -48.9115], endereco: "Araquari - SC"},
+        {nome: "Valdiesel Mecânica", tipo: "MECANICA", coords: [-26.2091, -48.9134], endereco: "Araquari - SC"},
+        {nome: "Joinville Guincho", tipo: "GUINCHO", coords: [-26.2283, -48.8317], endereco: "Joinville - SC"},
+        {nome: "XANDE Munck, Guincho e Auto Socorro", tipo: "GUINCHO", coords: [-26.2767, -48.8035], endereco: "Joinville - SC"},
+        {nome: "Auto Socorro JM - Guinchos 24 horas", tipo: "GUINCHO", coords: [-26.2724, -48.8751], endereco: "Joinville - SC"},
+        {nome: "Rodrigo Guincho", tipo: "GUINCHO", coords: [-26.3308, -48.8346], endereco: "Araquari - SC"},
+        {nome: "GUINCHO ITAUM", tipo: "GUINCHO", coords: [-26.3305, -48.8328], endereco: "Araquari - SC"},
+        {nome: "Prants Car Guincho Automotivo e Caminhões", tipo: "GUINCHO", coords: [-26.3321, -48.8192], endereco: "Araquari - SC"},
+        {nome: "Souza guincho", tipo: "GUINCHO", coords: [-26.3381, -48.8152], endereco: "Araquari - SC"},
+        {nome: "Lima guincho", tipo: "GUINCHO", coords: [-26.3339, -48.8058], endereco: "Araquari - SC"},
+        {nome: "Guincho Rampaville", tipo: "GUINCHO", coords: [-26.3731, -48.8259], endereco: "Araquari - SC"},
+        {nome: "Guincho Araquari e Auto peças e compra e venda de Sucatas", tipo: "GUINCHO", coords: [-26.3959, -48.7947], endereco: "Araquari - SC"},
+        {nome: "JD Guinchos", tipo: "GUINCHO", coords: [-26.4136, -48.7947], endereco: "Araquari - SC"},
+        {nome: "Brayan Guincho pesado e Transporte 24h", tipo: "GUINCHO", coords: [-26.3432, -48.7682], endereco: "Araquari - SC"},
+        {nome: "Beto Borracharia Móvel 24h", tipo: "BORRACHARIA", coords: [-26.3118, -48.9128], endereco: "Araquari - SC"},
+        {nome: "Bosch Car Service - Auto Mecânica Dorival", tipo: "MECANICA", coords: [-26.3268, -48.8373], endereco: "Araquari - SC"},
+        {nome: "BORRACHARIA GODINHO 24h", tipo: "BORRACHARIA", coords: [-26.3561, -48.8464], endereco: "Araquari - SC"},
+        {nome: "Borracharia do Zinho SOS", tipo: "BORRACHARIA", coords: [-26.3698, -48.8572], endereco: "Araquari - SC"},
+        {nome: "BORRACHARIA MÓVEL FIGUEREDO", tipo: "BORRACHARIA", coords: [-26.4311, -48.8045], endereco: "Araquari - SC"},
+        {nome: "Borracharia e mecânica pais e filhos", tipo: "BORRACHARIA", coords: [-26.1931, -48.9197], endereco: "Araquari - SC"},
+        {nome: "BORRACHARIA MÓVEL", tipo: "BORRACHARIA", coords: [-26.3984, -48.8072], endereco: "Araquari - SC"},
+        {nome: "Auto elétrica Baterias Rodrigues", tipo: "ELETRICA", coords: [-26.3961, -48.7984], endereco: "Araquari - SC"},
+        {nome: "Fênix auto elétrica e acessórios", tipo: "ELETRICA", coords: [-26.4333, -48.8115], endereco: "Joinville - SC"},
+        {nome: "Auto elétrica Martins LTDA", tipo: "ELETRICA", coords: [-26.4341, -48.8137], endereco: "Joinville - SC"},
+        {nome: "Hazure Sul", tipo: "MECANICA", coords: [-26.3761, -48.8407], endereco: "Araquari - SC"},
+        {nome: "Michel Elétrica Diesel", tipo: "ELETRICA", coords: [-26.3761, -48.8512], endereco: "Araquari - SC"},
+        {nome: "Michel Elétrica Diesel(MATRIZ)", tipo: "ELETRICA", coords: [-26.3538, -48.8598], endereco: "Araquari - SC"},
+        {nome: "Truck Diag Elétrica Diesel", tipo: "ELETRICA", coords: [-26.4055, -48.7708], endereco: "Araquari - SC"},
+        {nome: "Chip Truck - Auto Elétrica de Caminhões", tipo: "ELETRICA", coords: [-26.2204, -48.9174], endereco: "Araquari - SC"},
+        {nome: "AUTO ELETRICA ELETROTRUCK", tipo: "ELETRICA", coords: [-26.2315, -48.9177], endereco: "Araquari - SC"}
+      ],
+      "Rodeio": [
+        {nome: "OFICINA T2 TECNODUE", tipo: "MECANICA", coords: [-26.9084, -49.3664], endereco: "Rodeio - SC"},
+        {nome: "Oficina do Johnny", tipo: "MECANICA", coords: [-26.9094, -49.3671], endereco: "Rodeio - SC"},
+        {nome: "Auto Mecânica Rogério", tipo: "MECANICA", coords: [-26.8443, -49.2821], endereco: "Rodeio - SC"},
+        {nome: "Mecânica Bertoldi ldta me", tipo: "MECANICA", coords: [-26.9486, -49.3689], endereco: "Rodeio - SC"},
+        {nome: "Rudi Guincho 24 Horas | Leves e Pesados", tipo: "GUINCHO", coords: [-26.8613, -49.0981], endereco: "Rodeio - SC"},
+        {nome: "BR Mecânica Diesel", tipo: "MECANICA", coords: [-26.8646, -49.0895], endereco: "Rodeio - SC"},
+        {nome: "Marchetti Truck Center", tipo: "AUTOPEÇA", coords: [-26.8613, -49.0951], endereco: "Rodeio - SC"},
+        {nome: "PR Mecânica Diesel", tipo: "MECANICA", coords: [-26.8611, -49.0451], endereco: "Rodeio - SC"},
+        {nome: "Mecânica Mello Auto Diesel", tipo: "MECANICA", coords: [-26.8304, -49.2625], endereco: "Rodeio - SC"}
+      ],
+      "Pescaria Brava": [
+        {nome: "Roda Brasil Mecânica de Carretas - BR101", tipo: "MECANICA", coords: [-28.4271, -48.9182], endereco: "Pescaria Brava - SC"},
+        {nome: "Mecânica Sul Forte Truck Service", tipo: "MECANICA", coords: [-28.4587, -48.9857], endereco: "Pescaria Brava - SC"},
+        {nome: "Messilva Mecânica Scania Silva", tipo: "MECANICA", coords: [-28.4581, -48.9861], endereco: "Pescaria Brava - SC"},
+        {nome: "Roda Brasil Molas e Mecânica de Carretas - Tubarão", tipo: "MECANICA", coords: [-28.4659, -48.9911], endereco: "Pescaria Brava - SC"},
+        {nome: "CRILUB - Pneus e Troca de Óleo", tipo: "BORRACHARIA", coords: [-28.4754, -48.9951], endereco: "Pescaria Brava - SC"},
+        {nome: "Mêcanica Três Amigos", tipo: "MECANICA", coords: [-28.4672, -48.9961], endereco: "Pescaria Brava - SC"},
+        {nome: "Mecânica Só Diesel Alemão", tipo: "MECANICA", coords: [-28.4633, -49.0209], endereco: "Pescaria Brava - SC"},
+        {nome: "Cordini Truck Diesel, Oficina de Caminhões", tipo: "MECANICA", coords: [-28.4672, -49.0209], endereco: "Pescaria Brava - SC"},
+        {nome: "Bj Mecânica de Caminhões", tipo: "MECANICA", coords: [-28.4744, -49.0291], endereco: "Pescaria Brava - SC"},
+        {nome: "Messiltu Truck Center", tipo: "MECANICA", coords: [-28.4751, -49.0311], endereco: "Pescaria Brava - SC"},
+        {nome: "Elite Truck Diesel Mecânica", tipo: "MECANICA", coords: [-28.4953, -49.0411], endereco: "Pescaria Brava - SC"},
+        {nome: "Brutus Mecânica Truck Diesel", tipo: "MECANICA", coords: [-28.5071, -49.0481], endereco: "Pescaria Brava - SC"},
+        {nome: "Niltinho Motores Diesel", tipo: "MECANICA", coords: [-27.3135, -48.5746], endereco: "Pescaria Brava - SC"},
+        {nome: "Mecanica e auto socorro André", tipo: "MECANICA", coords: [-27.3157, -48.5572], endereco: "Pescaria Brava - SC"},
+        {nome: "SMJ GUINCHOS E MIRANDA BATERIAS", tipo: "GUINCHO", coords: [-27.3478, -48.5962], endereco: "Pescaria Brava - SC"},
+        {nome: "Mecânica Sandro", tipo: "MECANICA", coords: [-27.3995, -48.6308], endereco: "Pescaria Brava - SC"},
+        {nome: "Recar Transporte e Ar Condicionado", tipo: "MECANICA", coords: [-27.3966, -48.6063], endereco: "Pescaria Brava - SC"}
+      ],
+      "Governador Celso Ramos": [
+        {nome: "BORRACHARIA MOVEL QUEIROZ AUTOSOCORRO", tipo: "BORRACHARIA", coords: [-27.3619, -48.6371], endereco: "Governador Celso Ramos - SC"},
+        {nome: "Auto Eletrica Novo Tempo", tipo: "ELETRICA", coords: [-27.4209, -48.6235], endereco: "Governador Celso Ramos - SC"},
+        {nome: "Mecânica Beto", tipo: "MECANICA", coords: [-27.4234, -48.6253], endereco: "Governador Celso Ramos - SC"},
+        {nome: "Auto Socorro Marcinei - Caminhões", tipo: "MECANICA", coords: [-27.2257, -48.6141], endereco: "Governador Celso Ramos - SC"},
+        {nome: "OFICINA MECÂNICA CAMINHÃO JR REPAROS", tipo: "MECANICA", coords: [-27.2591, -48.7071], endereco: "Governador Celso Ramos - SC"},
+        {nome: "Mecânica Silva de Caminhão", tipo: "MECANICA", coords: [-27.2554, -48.7259], endereco: "Governador Celso Ramos - SC"},
+        {nome: "Rio Vale Diesel", tipo: "MECANICA", coords: [-27.2661, -48.7951], endereco: "Governador Celso Ramos - SC"}
+      ],
+      "Duque de Caxias": [
+        {nome: "Oficina Mecânica Lindra Nadir", tipo: "MECANICA", coords: [-22.6691, -43.2964], endereco: "Duque de Caxias - RJ"},
+        {nome: "Mecanica diesel Marcelo", tipo: "MECANICA", coords: [-22.6634, -43.3111], endereco: "Duque de Caxias - RJ"},
+        {nome: "VN AUTOMECÂNICA A DIESEL", tipo: "MECANICA", coords: [-22.6665, -43.2911], endereco: "Duque de Caxias - RJ"},
+        {nome: "Oficina Trucks Control em Duque de Caxias", tipo: "MECANICA", coords: [-22.6641, -43.2718], endereco: "Duque de Caxias - RJ"},
+        {nome: "Jorge Guedes", tipo: "MECANICA", coords: [-22.6484, -43.2574], endereco: "Duque de Caxias - RJ"},
+        {nome: "Dézio Auto Mecânica Diesel", tipo: "MECANICA", coords: [-22.6643, -43.2655], endereco: "Duque de Caxias - RJ"},
+        {nome: "M.S TRUCK", tipo: "MECANICA", coords: [-22.6726, -43.2932], endereco: "Duque de Caxias - RJ"},
+        {nome: "Global Manutenção Veicular", tipo: "MECANICA", coords: [-22.6861, -43.2925], endereco: "Duque de Caxias - RJ"},
+        {nome: "J L S Mecanica Diesel", tipo: "MECANICA", coords: [-22.6981, -43.2706], endereco: "Duque de Caxias - RJ"},
+        {nome: "S.O.S DIESEL 24 HORAS", tipo: "MECANICA", coords: [-22.6375, -43.2999], endereco: "Duque de Caxias - RJ"},
+        {nome: "BRG Mecanica Diesel", tipo: "MECANICA", coords: [-22.6362, -43.2678], endereco: "Duque de Caxias - RJ"},
+        {nome: "Borracharia Movel | Socorro 24h WJF", tipo: "BORRACHARIA", coords: [-22.7529, -43.2734], endereco: "Duque de Caxias - RJ"},
+        {nome: "Borracheiro de São José", tipo: "BORRACHARIA", coords: [-22.8892, -43.2204], endereco: "Duque de Caxias - RJ"},
+        {nome: "Eletroforce Elétrica Diesel", tipo: "ELETRICA", coords: [-22.6685, -43.2749], endereco: "Duque de Caxias - RJ"},
+        {nome: "Valdir Truck AUTO ELETRICA E ACESSORIOS LTDA", tipo: "ELETRICA", coords: [-22.6704, -43.2742], endereco: "Duque de Caxias - RJ"},
+        {nome: "Dex Reboque", tipo: "GUINCHO", coords: [-22.6060, -43.1800], endereco: "Duque de Caxias - RJ"}
+      ],
+      "Chapecó": [
+        {nome: "RODE BEM MECÂNICA - SÓ IVECO", tipo: "MECANICA", coords: [-27.0713, -52.6294], endereco: "Chapecó - SC"},
+        {nome: "Posmovil Chapecó - Oficina Mecanica para Caminhões", tipo: "MECANICA", coords: [-27.0660, -52.6289], endereco: "Chapecó - SC"},
+        {nome: "Maxi Serviços Mecânicos Chapecó", tipo: "MECANICA", coords: [-27.0669, -52.6364], endereco: "Chapecó - SC"},
+        {nome: "ARALDI TRUCK CENTER", tipo: "MECANICA", coords: [-27.0671, -52.6352], endereco: "Chapecó - SC"},
+        {nome: "Amplexo Diesel Service Chapecó - Oficina Mecânica", tipo: "MECANICA", coords: [-27.0647, -52.6369], endereco: "Chapecó - SC"},
+        {nome: "Euro Truck Injeção Eletrônica Diesel", tipo: "ELETRICA", coords: [-27.0634, -52.6381], endereco: "Chapecó - SC"}
+      ],
+      "Rolândia": [
+        {nome: "Oficina Mecânica Balan", tipo: "MECANICA", coords: [-23.3025, -51.3543], endereco: "Rolândia - PR"},
+        {nome: "Star Diesel Com e Retífica Motores", tipo: "MECANICA", coords: [-23.3034, -51.3586], endereco: "Rolândia - PR"},
+        {nome: "JotaTratores", tipo: "MECANICA", coords: [-23.3112, -51.3709], endereco: "Rolândia - PR"},
+        {nome: "Auto Elétrica Rolândia", tipo: "ELETRICA", coords: [-23.3115, -51.3729], endereco: "Rolândia - PR"},
+        {nome: "JM Auto Socorro - Guincho Rolândia", tipo: "GUINCHO", coords: [-23.2966, -51.3555], endereco: "Rolândia - PR"},
+        {nome: "Guincho Rolândia", tipo: "GUINCHO", coords: [-23.3121, -51.3665], endereco: "Rolândia - PR"},
+        {nome: "Auto Socorro Perucci - Serviços de Reboque/Guincho", tipo: "GUINCHO", coords: [-23.3169, -51.3649], endereco: "Rolândia - PR"}
+      ],
+      "São José dos Pinhais": [
+        {nome: "M&M TRUCK CENTER ALINHAMENTO A LASER E MOLAS", tipo: "MECANICA", coords: [-25.5620, -49.1716], endereco: "São José dos Pinhais - PR"},
+        {nome: "Barão Truck Center", tipo: "AUTOPEÇA", coords: [-25.5800, -49.1780], endereco: "São José dos Pinhais - PR"},
+        {nome: "JCA Mecânica Diesel", tipo: "MECANICA", coords: [-25.5461, -49.1856], endereco: "São José dos Pinhais - PR"},
+        {nome: "OFICINA MECÂNICA CAJA DIESEL", tipo: "MECANICA", coords: [-25.5674, -49.1939], endereco: "São José dos Pinhais - PR"},
+        {nome: "TDS Peças e Serviços", tipo: "AUTOPEÇA", coords: [-25.4725, -49.3488], endereco: "São José dos Pinhais - PR"},
+        {nome: "Alvenek Auto Elétrica", tipo: "ELETRICA", coords: [-25.440178200426406, -49.36857834881595], endereco: "São José dos Pinhais - PR"},
+        {nome: "Auto Elétrica Rodotruck", tipo: "ELETRICA", coords: [-25.5262, -49.3142], endereco: "São José dos Pinhais - PR"},
+        {nome: "Auto Elétrica Diesel Gallo", tipo: "ELETRICA", coords: [-25.4485, -49.1280], endereco: "São José dos Pinhais - PR"},
+        {nome: "Jota Auto Eletrica", tipo: "ELETRICA", coords: [-25.6069, -49.1706], endereco: "São José dos Pinhais - PR"},
+        {nome: "STAICHOK LOCAÇÃO DE CAMINHÃO MUNCK", tipo: "GUINCHO", coords: [-25.3985, -49.1898], endereco: "São José dos Pinhais - PR"},
+        {nome: "SOS Merces (Auto Socorro Merces) Guincho em Curitiba", tipo: "GUINCHO", coords: [-25.4033, -49.2909], endereco: "São José dos Pinhais - PR"},
+        {nome: "Guincho Thiago Berdusco", tipo: "GUINCHO", coords: [-25.5409, -49.2827], endereco: "São José dos Pinhais - PR"},
+        {nome: "Guincho Pesado São José Dos Pinhais 24 Horas", tipo: "GUINCHO", coords: [-25.5736, -49.1537], endereco: "São José dos Pinhais - PR"}
+      ],
+      "Osasco": [
+        {nome: "Garage Truck Center", tipo: "AUTOPEÇA", coords: [-23.5077, -46.7620], endereco: "Osasco - SP"},
+        {nome: "Recuperadora Garage Truck Center", tipo: "AUTOPEÇA", coords: [-23.5160, -46.7650], endereco: "Osasco - SP"},
+        {nome: "Truck Center MN Pneus", tipo: "BORRACHARIA", coords: [-23.5261, -46.7533], endereco: "Osasco - SP"},
+        {nome: "Nel Auto Mecânica Diesel", tipo: "MECANICA", coords: [-23.5052, -46.7027], endereco: "Osasco - SP"},
+        {nome: "Auto Elétrico Eguchi", tipo: "ELETRICA", coords: [-23.5184, -46.7911], endereco: "Osasco - SP"},
+        {nome: "Fk auto elétrica", tipo: "ELETRICA", coords: [-23.4839, -46.7763], endereco: "Osasco - SP"},
+        {nome: "Auto Elétrico e Mecânica RG", tipo: "ELETRICA", coords: [-23.5450, -46.8386], endereco: "Osasco - SP"},
+        {nome: "Gonçalves Guincho Pesado", tipo: "GUINCHO", coords: [-23.5107, -46.8050], endereco: "Osasco - SP"},
+        {nome: "Delta Guinchos 24 Horas", tipo: "GUINCHO", coords: [-23.5667, -46.8148], endereco: "Osasco - SP"}
+      ],
+      "Canoas": [
+        {nome: "Makro Diesel", tipo: "MECANICA", coords: [-29.8844, -51.1851], endereco: "Canoas - RS"},
+        {nome: "Master Diesel Serviços Mecânicos", tipo: "MECANICA", coords: [-29.8853, -51.1773], endereco: "Canoas - RS"},
+        {nome: "Mecânica Diesel Vabis", tipo: "MECANICA", coords: [-29.8982, -51.1908], endereco: "Canoas - RS"},
+        {nome: "Dorini Mecânica Diesel", tipo: "MECANICA", coords: [-29.9450, -51.1736], endereco: "Canoas - RS"},
+        {nome: "Sobrinho's Mecânica Diesel", tipo: "MECANICA", coords: [-29.9167, -51.1366], endereco: "Canoas - RS"},
+        {nome: "Eletrisol Comércio de Peças e Serviços Ltda", tipo: "AUTOPEÇA", coords: [-29.8607, -51.1747], endereco: "Canoas - RS"},
+        {nome: "Auto Elétrica Megatruck", tipo: "ELETRICA", coords: [-29.9102, -51.1970], endereco: "Canoas - RS"},
+        {nome: "Brocca Auto Peças e Auto Eletrica", tipo: "AUTOPEÇA", coords: [-29.8945, -51.1705], endereco: "Canoas - RS"},
+        {nome: "Jeg Guinchos", tipo: "GUINCHO", coords: [-29.8837, -51.1925], endereco: "Canoas - RS"},
+        {nome: "FC GUINCHO", tipo: "GUINCHO", coords: [-29.9122, -51.1990], endereco: "Canoas - RS"}
+      ],
+      "São Vicente": [
+        {nome: "centro auto motivo MDC", tipo: "AUTOPEÇA", coords: [-23.9767, -46.4787], endereco: "São Vicente - SP"},
+        {nome: "H&L Oficina Mecânica", tipo: "MECANICA", coords: [-23.9780, -46.4746], endereco: "São Vicente - SP"},
+        {nome: "L&H Implementos Rodoviários", tipo: "GUINCHO", coords: [-23.9894, -46.4799], endereco: "São Vicente - SP"},
+        {nome: "Oficina Zé do Guincho", tipo: "GUINCHO", coords: [-23.9910, -46.4933], endereco: "São Vicente - SP"}
+      ]
+    };
 
-        const label = normalizarTexto(celulas[0].textContent)
-          .replace(/:$/, '');
+    const tipoCores = {
+      "ELETRICA": "#e74c3c",
+      "MECANICA": "#3498db",
+      "TACOGRAFO": "#9b59b6",
+      "LAVAÇÃO": "#1abc9c",
+      "AUTOPEÇA": "#f39c12",
+      "BORRACHARIA": "#e67e22",
+      "GUINCHO": "#2ecc71"
+    };
 
-        if (
-          label === nomeNormalizado ||
-          label.includes(nomeNormalizado) ||
-          nomeNormalizado.includes(label)
-        ) {
-          return celulas
-            .slice(1)
-            .map(celula => celula.textContent.trim())
-            .join(' ')
-            .trim();
+    const tipoDescricao = {
+      "ELETRICA": "Eletrica",
+      "MECANICA": "Mecanica",
+      "TACOGRAFO": "Tacografo",
+      "LAVAÇÃO": "Lavacao",
+      "AUTOPEÇA": "Autopeça",
+      "BORRACHARIA": "Borracharia",
+      "GUINCHO": "Guincho"
+    }; 
+    
+    const tbodyUn = document.querySelector('#unidadesTable tbody');
+    unidades.forEach(u => {
+      const row = tbodyUn.insertRow();
+      row.innerHTML = `<td><strong>${u.nome}</strong><br><small>${u.cidade}</small></td>`;
+      row.onclick = () => {
+        clearMarkers();
+        map.flyTo(u.coords, 12);
+        const icon = u.grande ? grandeIcon : L.icon({iconUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon.png', iconSize: [22,32]});
+        const m = L.marker(u.coords, {icon}).addTo(map).bindPopup(`<b>${u.nome}</b><br>${u.cidade}`);
+        currentMarkers.push(m);
+        if (oficinasPorUnidade[u.nome]) addOficinas(oficinasPorUnidade[u.nome]);
+      };
+    });
+
+    const todasOficinas = Object.values(oficinasPorUnidade).flat().sort((a, b) => a.nome.localeCompare(b.nome));
+    const tbodyOf = document.querySelector('#oficinasTable tbody');
+    todasOficinas.forEach(p => {
+      const row = tbodyOf.insertRow();
+      row.innerHTML = `<td><strong>${p.nome}</strong><br><small>${p.tipo}</small></td>`;
+      row.onclick = () => {
+        clearMarkers();
+        map.flyTo(p.coords, 14);
+        addOfficePopup(p);
+      };
+    });
+
+    // Filtro da legenda: null = mostra todos os tipos
+    let filtroTipo = null;
+
+    function aplicarFiltroOficinas() {
+      marcadoresOficinas.forEach(item => {
+        const tipo = item.dados.tipo;
+        const mostrar = !filtroTipo || tipo === filtroTipo;
+        if (mostrar) {
+          if (!map.hasLayer(item.marker)) {
+            item.marker.addTo(map);
+          }
+        } else {
+          if (map.hasLayer(item.marker)) {
+            map.removeLayer(item.marker);
+          }
         }
+      });
+
+      // Atualiza visual da legenda
+      document.querySelectorAll('.map-legend-item[data-tipo]').forEach(el => {
+        const t = el.getAttribute('data-tipo');
+        el.classList.remove('ativo-filtro', 'inativo');
+        if (filtroTipo) {
+          if (t === filtroTipo) el.classList.add('ativo-filtro');
+          else el.classList.add('inativo');
+        }
+      });
+    }
+
+    function selecionarFiltroTipo(tipo) {
+      // Clica de novo no mesmo tipo → volta a mostrar todos
+      if (filtroTipo === tipo) {
+        filtroTipo = null;
+      } else {
+        filtroTipo = tipo;
       }
-
-      return '';
+      aplicarFiltroOficinas();
     }
 
-    function extrairBateria(descHtml) {
-      const campos = [
-        'Bateria (V)',
-        'Bateria',
-        'Voltagem da bateria',
-        'Voltagem',
-        'Tensão da bateria',
-        'Tensão',
-        'Battery',
-        'Voltage'
-      ];
-
-      for (const campo of campos) {
-        const valor = extrairCampo(descHtml, campo);
-        if (valor) return valor;
-      }
-
-      const texto = normalizarTexto(decodeHtml(descHtml));
-      const encontrada = texto.match(
-        /(?:bateria|voltagem|tensao|battery|voltage)[^0-9]{0,40}([0-9]+(?:[,.][0-9]+)?)\s*v?/i
-      );
-
-      return encontrada ? encontrada[1] : '';
+    function limparFiltroTipo() {
+      filtroTipo = null;
+      aplicarFiltroOficinas();
     }
 
-    function formatarBateria(valor) {
-      const texto = String(valor || '').trim();
+    const legendDiv = document.getElementById('legend');
+    Object.keys(tipoCores).forEach(tipo => {
+      const item = document.createElement('div');
+      item.className = 'map-legend-item';
+      item.setAttribute('data-tipo', tipo);
+      item.title = 'Clique para filtrar: ' + tipoDescricao[tipo];
+      item.innerHTML = `<div class="map-legend-color" style="background:${tipoCores[tipo]}"></div><span>${tipoDescricao[tipo]}</span>`;
+      item.onclick = () => selecionarFiltroTipo(tipo);
+      legendDiv.appendChild(item);
+    });
 
-      if (!texto || texto === '-' || texto === '—') {
-        return 'Não informado';
-      }
+    const todos = document.createElement('div');
+    todos.className = 'map-legend-todos';
+    todos.textContent = '↺ Mostrar todos';
+    todos.onclick = limparFiltroTipo;
+    legendDiv.appendChild(todos);
 
-      return /v\b|volt/i.test(texto)
-        ? texto
-        : texto.replace(',', '.') + ' V';
-    }
-
-    function parseVelocidade(txt) {
-      const match = String(txt || '').match(/([\d.,]+)/);
-      return match
-        ? parseFloat(match[1].replace(',', '.'))
-        : 0;
-    }
-
-    function parseKmlSascar(kmlText) {
-      const parser = new DOMParser();
-      const xml = parser.parseFromString(kmlText, 'text/xml');
-      const placemarks = xml.getElementsByTagName('Placemark');
-      const lista = [];
-
-      for (const pm of placemarks) {
-        const descNode = pm.getElementsByTagName('description')[0];
-        const coordNode = pm.getElementsByTagName('coordinates')[0];
-
-        if (!descNode || !coordNode) continue;
-
-        const desc = descNode.textContent || '';
-        const partes = coordNode.textContent.trim().split(',');
-
-        if (partes.length < 2) continue;
-
-        const lng = parseFloat(partes[0]);
-        const lat = parseFloat(partes[1]);
-
-        if (isNaN(lat) || isNaN(lng)) continue;
-
-        const placa = extrairCampo(desc, 'Placa');
-        if (!placa) continue;
-
-        const municipio =
-          extrairCampo(desc, 'Município') ||
-          extrairCampo(desc, 'Municipio');
-
-        const estado = extrairCampo(desc, 'Estado');
-        const rua = extrairCampo(desc, 'Rua');
-        const ignicao =
-          extrairCampo(desc, 'Ignição') ||
-          extrairCampo(desc, 'Ignicao');
-        const velocidade = extrairCampo(desc, 'Velocidade');
-        const data = extrairCampo(desc, 'Data');
-        const motorista = extrairCampo(desc, 'Motorista');
-
-        lista.push({
-          placa: placa.toUpperCase(),
-          cidade: [municipio, estado].filter(Boolean).join(' - ') || '—',
-          rua: rua || '',
-          lat,
-          lng,
-          ignicao: /ligada|on|sim/i.test(ignicao),
-          velocidade: parseVelocidade(velocidade),
-          data: data || '',
-          motorista: motorista || '',
-          bateria: extrairBateria(desc)
-        });
-      }
-
-      return lista;
-    }
-
-    function popupCaminhao(c) {
+    function popupHtml(p) {
+      const mapLink = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(p.nome + ' ' + (p.endereco || ''))}`;
+      const imageUrl = imgByType[p.tipo] || imgByType.MECANICA;
       return `
-        <b>🚚 ${c.placa}</b><br>
-        📍 ${c.cidade}${c.rua ? '<br>🛣 ' + c.rua : ''}<br>
-        ⚡ Ignição: ${c.ignicao ? 'Ligada' : 'Desligada'}<br>
-        🏎️ Velocidade: ${c.velocidade} km/h<br>
-        🔋 Bateria: ${formatarBateria(c.bateria)}
-        ${c.data ? '<br>🕒 ' + c.data : ''}
+        <div class="gm-popup">
+          <img class="gm-img" src="${imageUrl}" alt="${p.nome}">
+          <div class="gm-title">${p.nome}</div>
+          <div class="gm-sub">${p.endereco || ''}<br>Tipo: ${p.tipo}</div>
+          <a class="gm-link" href="${mapLink}" target="_blank">Abrir no Google Maps</a>
+        </div>
       `;
     }
 
-    function atualizarPainelSeAberto(c) {
-      if (!placaSelecionada || placaSelecionada !== c.placa) return;
-
-      document.getElementById('infoPlaca').innerText = c.placa;
-      document.getElementById('infoCidade').innerText = c.cidade;
-      document.getElementById('infoIgnicao').innerText =
-        c.ignicao ? '🟢 Ligada' : '🔴 Desligada';
-      document.getElementById('infoVelocidade').innerText =
-        c.velocidade + ' km/h';
-      document.getElementById('infoBateria').innerText =
-        formatarBateria(c.bateria);
-    }
-
-    function limparMarcadoresCaminhoes() {
-      marcadoresCaminhoes.forEach(item => map.removeLayer(item.marker));
-      marcadoresCaminhoes = [];
-    }
-
-    function sincronizarMarcadores(lista) {
-      caminhoes = lista;
-      limparMarcadoresCaminhoes();
-
-      lista.forEach(c => {
-        const marker = L.marker([c.lat, c.lng], {
-          icon: iconeCaminhao
-        }).addTo(map);
-
-        marker
-          .bindPopup(popupCaminhao(c))
-          .bindTooltip(c.placa, {
-            direction: 'top',
-            offset: [0, -22],
-            className: 'placa-tooltip'
-          });
-
-        marker.on('click', () => abrirPainelCaminhao(c.placa));
-        marcadoresCaminhoes.push({ placa: c.placa, marker });
-        atualizarPainelSeAberto(c);
-      });
-
-      const status = document.getElementById('statusFrota');
-      if (status) {
-        status.textContent =
-          `● Sascar KML · ${lista.length} veículos · ${new Date().toLocaleTimeString('pt-BR')}`;
+    function addOfficePopup(p) {
+      const cor = tipoCores[p.tipo] || "#555";
+      const m = L.circleMarker(p.coords, {
+        radius: 8, color: cor, fillColor: cor, fillOpacity: 0.9, weight: 2
+      }).bindPopup(popupHtml(p));
+      if (!filtroTipo || p.tipo === filtroTipo) {
+        m.addTo(map);
       }
+      currentMarkers.push(m);
+      marcadoresOficinas.push({ marker: m, dados: p });
+      m.openPopup();
     }
 
-    async function carregarVeiculosKML() {
-      try {
-        const resposta = await fetch(
-          'https://frota3-filtroamb.github.io/Mapa-Filtro/dados/veiculos.kml',
-          { cache: 'no-store' }
+    function clearMarkers() {
+      currentMarkers.forEach(m => map.removeLayer(m));
+      currentMarkers = [];
+      marcadoresOficinas = [];
+    }
+
+function addOficinas(lista, posicao) {
+
+    marcadoresOficinas = [];
+
+    lista.forEach(p => {
+
+        const cor = tipoCores[p.tipo] || "#555";
+
+        let distancia = Infinity;
+
+        if (posicao) {
+            distancia = calcularDistancia(
+                posicao.lat,
+                posicao.lng,
+                p.coords[0],
+                p.coords[1]
+            );
+        }
+
+        const oficinaMaisProxima = posicao
+            ? encontrarOficinaMaisProxima(posicao.lat, posicao.lng).oficina
+            : null;
+
+        const ehMaisProxima =
+            oficinaMaisProxima &&
+            oficinaMaisProxima.nome === p.nome;
+
+
+        const m = L.circleMarker(p.coords, {
+            radius: ehMaisProxima ? 10 : 7,
+            color: cor,
+            fillColor: cor,
+            fillOpacity: 0.9,
+            weight: ehMaisProxima ? 3 : 2
+        }).bindPopup(popupHtml(p));
+
+        if (!filtroTipo || p.tipo === filtroTipo) {
+            m.addTo(map);
+        }
+
+        currentMarkers.push(m);
+
+        marcadoresOficinas.push({
+            marker: m,
+            dados: p
+        });
+
+    });
+
+}
+
+function calcularDistancia(lat1, lon1, lat2, lon2) {
+
+    const R = 6371; // km
+
+    const dLat = (lat2 - lat1) * Math.PI / 180;
+    const dLon = (lon2 - lon1) * Math.PI / 180;
+
+    const a =
+        Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+        Math.cos(lat1 * Math.PI / 180) *
+        Math.cos(lat2 * Math.PI / 180) *
+        Math.sin(dLon / 2) *
+        Math.sin(dLon / 2);
+
+    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+
+    return R * c;
+
+}
+
+function encontrarOficinaMaisProxima(lat, lng){
+
+    let oficinaMaisProxima = null;
+    let menorDistancia = Infinity;
+
+    Object.values(oficinasPorUnidade).flat().forEach(oficina => {
+
+        const distancia = calcularDistancia(
+            lat,
+            lng,
+            oficina.coords[0],
+            oficina.coords[1]
         );
 
-        if (!resposta.ok) {
-          console.error('Erro ao carregar KML:', resposta.status);
-          return;
+        if(distancia < menorDistancia){
+
+            menorDistancia = distancia;
+            oficinaMaisProxima = oficina;
+
         }
 
-        const lista = parseKmlSascar(await resposta.text());
+    });
 
-        if (lista.length) {
-          sincronizarMarcadores(lista);
-        } else {
-          console.warn('Nenhum veículo encontrado no KML.');
+    return {
+        oficina: oficinaMaisProxima,
+        distancia: menorDistancia
+    };
+
+}
+
+function mostrarOficinasProximas(lat, lng){
+
+    // Monta lista com distância
+    const lista = Object.values(oficinasPorUnidade).flat().map(oficina => {
+        const distancia = calcularDistancia(
+            lat,
+            lng,
+            oficina.coords[0],
+            oficina.coords[1]
+        );
+        return { ...oficina, distancia };
+    });
+
+    // Pega só a mais próxima de CADA tipo
+    const maisProximaPorTipo = {};
+    lista.forEach(oficina => {
+        const tipo = oficina.tipo;
+        if (!maisProximaPorTipo[tipo] || oficina.distancia < maisProximaPorTipo[tipo].distancia) {
+            maisProximaPorTipo[tipo] = oficina;
         }
-      } catch (erro) {
-        console.error('Erro ao carregar KML:', erro);
-      }
-    }
+    });
 
-    function carregarFrotaDoKml(kmlText) {
-      const lista = parseKmlSascar(kmlText);
+    // Ordena os tipos pela distância (mais perto primeiro)
+    const resultado = Object.values(maisProximaPorTipo)
+        .sort((a, b) => a.distancia - b.distancia);
 
-      if (!lista.length) {
-        alert('Nenhum veículo encontrado neste KML.');
+    const div = document.getElementById("listaOficinas");
+    div.innerHTML = "";
+
+    if (!resultado.length) {
+        div.innerHTML = '<div class="oficinaDistancia">Nenhuma oficina cadastrada.</div>';
         return;
-      }
-
-      sincronizarMarcadores(lista);
     }
 
-    function onKmlFileSelected(event) {
-      const file = event.target.files && event.target.files[0];
-      if (!file) return;
+    resultado.forEach((oficina, idx) => {
+        const nomeTipo = (tipoDescricao[oficina.tipo] || oficina.tipo);
+        const oLat = oficina.coords[0];
+        const oLng = oficina.coords[1];
+        div.innerHTML += `
+        <div class="oficinaItem">
+            <div class="oficinaNome" onclick="irParaOficina(${oLat},${oLng})" style="cursor:pointer">
+                ${nomeTipo} • ${oficina.nome}
+            </div>
+            <div class="oficinaDistancia">
+                ${oficina.tipo}<br>
+                📍 ${oficina.distancia.toFixed(1)} km
+            </div>
+            <div class="oficinaAcoes">
+                <button type="button" class="btnRota btnRotaMaps"
+                    onclick="abrirRotaGoogle(${lat},${lng},${oLat},${oLng})">
+                    🗺️ Google Maps
+                </button>
+                <button type="button" class="btnRota btnRotaWaze"
+                    onclick="abrirRotaWaze(${oLat},${oLng})">
+                    📍 Waze
+                </button>
+                <button type="button" class="btnRota btnRotaCopiar"
+                    onclick="copiarLinkRota(${lat},${lng},${oLat},${oLng},'${oficina.nome.replace(/'/g, "\'")}')">
+                    📋 Copiar link
+                </button>
+            </div>
+        </div>
+        `;
+    });
 
-      const reader = new FileReader();
-      reader.onload = () => carregarFrotaDoKml(String(reader.result || ''));
-      reader.readAsText(file);
+}
+
+function irParaOficina(lat,lng){
+    map.flyTo([lat,lng],15,{
+        duration:1.5
+    });
+}
+
+/** Rota Google Maps: caminhão → oficina (abre para enviar ao motorista) */
+function abrirRotaGoogle(origLat, origLng, destLat, destLng) {
+    const url = 'https://www.google.com/maps/dir/?api=1'
+        + '&origin=' + encodeURIComponent(origLat + ',' + origLng)
+        + '&destination=' + encodeURIComponent(destLat + ',' + destLng)
+        + '&travelmode=driving';
+    window.open(url, '_blank');
+}
+
+/** Abre navegação no Waze até a oficina */
+function abrirRotaWaze(destLat, destLng) {
+    const url = 'https://waze.com/ul?ll=' + destLat + '%2C' + destLng + '&navigate=yes';
+    window.open(url, '_blank');
+}
+
+/** Copia link do Google Maps para colar no WhatsApp do motorista */
+async function copiarLinkRota(origLat, origLng, destLat, destLng, nomeOficina) {
+    const url = 'https://www.google.com/maps/dir/?api=1'
+        + '&origin=' + encodeURIComponent(origLat + ',' + origLng)
+        + '&destination=' + encodeURIComponent(destLat + ',' + destLng)
+        + '&travelmode=driving';
+
+    const texto = 'Rota até ' + (nomeOficina || 'oficina') + ':\n' + url;
+
+    try {
+        await navigator.clipboard.writeText(texto);
+        alert('Link da rota copiado!\nCole no WhatsApp do motorista.');
+    } catch (e) {
+        // fallback
+        prompt('Copie o link abaixo e envie ao motorista:', url);
     }
+}
 
-    function abrirPainelCaminhao(placa) {
-      const dados = caminhoes.find(
-        c => c.placa.toUpperCase() === placa.toUpperCase()
-      );
+const painel = document.getElementById("painelCaminhao");
+const btnFechar = document.getElementById("fecharPainel");
 
-      if (!dados) return;
-
-      placaSelecionada = dados.placa.toUpperCase();
-
-      if (circuloCaminhao) {
+btnFechar.onclick = () => {
+    painel.classList.remove("ativo");
+    placaSelecionada = null;
+    if (circuloCaminhao) {
         map.removeLayer(circuloCaminhao);
-      }
-
-      circuloCaminhao = L.circle([dados.lat, dados.lng], {
-        radius: 5000,
-        color: '#0d5c2e',
-        fillColor: '#0d5c2e',
-        fillOpacity: .15,
-        weight: 3
-      }).addTo(map);
-
-      map.flyToBounds(circuloCaminhao.getBounds(), {
-        padding: [40, 40],
-        duration: 1.2
-      });
-
-      const item = marcadoresCaminhoes.find(
-        marcador => marcador.placa === placaSelecionada
-      );
-
-      if (item) item.marker.openPopup();
-
-      document.getElementById('painelCaminhao').classList.add('ativo');
-      document.getElementById('infoPlaca').innerText = dados.placa;
-      document.getElementById('infoCidade').innerText = dados.cidade;
-      document.getElementById('infoIgnicao').innerText =
-        dados.ignicao ? '🟢 Ligada' : '🔴 Desligada';
-      document.getElementById('infoVelocidade').innerText =
-        dados.velocidade + ' km/h';
-      document.getElementById('infoBateria').innerText =
-        formatarBateria(dados.bateria);
+        circuloCaminhao = null;
     }
+};
 
-    function pesquisarPlaca() {
-      const placa = document
-        .getElementById('buscarPlaca')
+
+function pesquisarPlaca(){
+    const placa = document
+        .getElementById("buscarPlaca")
         .value
         .trim()
         .toUpperCase();
 
-      if (!placa) return;
+    if (placa == "") return;
 
-      const caminhao = marcadoresCaminhoes.find(
-        item => item.placa.includes(placa)
-      );
+    const caminhao = marcadoresCaminhoes.find(c => c.placa.includes(placa));
 
-      if (!caminhao) {
-        alert('Caminhão não encontrado: ' + placa);
+    if (!caminhao) {
+        alert("Caminhão não encontrado: " + placa);
         return;
-      }
-
-      abrirPainelCaminhao(caminhao.placa);
     }
 
-    document.getElementById('fecharPainel').onclick = () => {
-      document.getElementById('painelCaminhao').classList.remove('ativo');
-      placaSelecionada = null;
+    abrirPainelCaminhao(caminhao.placa);
+}
 
-      if (circuloCaminhao) {
-        map.removeLayer(circuloCaminhao);
-        circuloCaminhao = null;
-      }
-    };
 
     function toggleFullscreen() {
-      if (!document.fullscreenElement) {
-        document.documentElement.requestFullscreen?.();
-      } else {
-        document.exitFullscreen?.();
-      }
+      const el = document.documentElement;
+      if (!document.fullscreenElement) el.requestFullscreen?.();
+      else document.exitFullscreen?.();
     }
 
-    carregarVeiculosKML();
-    setInterval(carregarVeiculosKML, 60000);
+// Carrega a frota ao abrir o mapa
+carregarVeiculosKML();
+// Atualiza a cada 60 segundos
+setInterval(carregarVeiculosKML, 60000);
 
-    setTimeout(() => map.invalidateSize(), 500);
+    
   </script>
 </body>
 </html>
