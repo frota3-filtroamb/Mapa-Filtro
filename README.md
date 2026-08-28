@@ -34,3 +34,6 @@ Mapa Interativo (Leaflet.js): Foi utilizada a biblioteca gratuita Leaflet (leafl
 Ícones (Font-Awesome): Biblioteca de ícones usada para desenhar os símbolos de ferramentas, caminhões, lupas e pastas.
 
 Lógica (JavaScript): Controla a busca de placas, lê o arquivo KML da Sascar, filtra a exibição das oficinas e atualiza os painéis informativos de cada caminhão.
+
+4. Programa utilizado:
+Esse código foi desenvolvido direto na plataforma web do OneCompiler, usando o ambiente de testes de HTML, CSS e JavaScript que ele oferece de forma gratuita e online.
